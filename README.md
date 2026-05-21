@@ -1,27 +1,27 @@
 # Kedada Admin
 
-Panel de administracion standalone para gestionar eventos de Kedada.
+Standalone admin panel for managing Kedada events.
 
-## Configuracion
+## Configuration
 
 ```bash
 cp .env.example .env
 ```
 
-`VITE_API_BASE_URL` debe apuntar al backend:
+`VITE_API_BASE_URL` must point to the backend:
 
 ```bash
 VITE_API_BASE_URL=http://localhost:8080
 ```
 
-## Desarrollo
+## Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Rutas principales:
+Main routes:
 
 - `/login`
 - `/register`
@@ -31,17 +31,17 @@ Rutas principales:
 - `/admin/events/:id`
 - `/admin/events/:id/edit`
 
-## Backend usado
+## Backend
 
-La API fuente de verdad es `/home/alex/Documents/kedada-api`.
+The source-of-truth API is `/home/alex/Documents/kedada-api`.
 
-- Eventos: `/api/v1/events`
-- Tipos de evento: `/api/v1/categories`
-- URLs / enlaces: `/api/v1/urls`
-- Autenticacion: `/api/v1/auth/login` y `/api/v1/auth/register`
+- Events: `/api/v1/events`
+- Event types: `/api/v1/categories`
+- URLs / links: `/api/v1/urls`
+- Authentication: `/api/v1/auth/login` and `/api/v1/auth/register`
 
-Los writes usan `Authorization: Bearer <token>` y el backend deriva `ownerId`
-desde la sesion autenticada.
+Write requests use `Authorization: Bearer <token>`, and the backend derives
+`ownerId` from the authenticated session.
 
-No hay endpoints de media/imagenes todavia. El campo `thumbnail` queda como UUID
-manual hasta que el backend exponga carga o catalogo de imagenes.
+There are no media/image endpoints yet. The `thumbnail` field remains a manual
+UUID until the backend exposes image upload or an image catalog.
