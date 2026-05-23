@@ -34,11 +34,14 @@ export function getApiErrorMessage(error: unknown): string {
     const axiosError = error as AxiosError<ApiErrorBody>;
     const data = axiosError.response?.data;
     const fieldMessage = data?.fieldErrors?.[0]?.message;
+    const status = axiosError.response?.status;
 
     return (
       fieldMessage ??
       data?.message ??
       data?.error ??
+      (status === 403 ? 'No tienes permisos para completar esta accion. Revisa que hayas iniciado sesion y que el recurso pertenezca a tu usuario.' : undefined) ??
+      (status === 401 ? 'Tu sesion expiro o no es valida. Inicia sesion nuevamente.' : undefined) ??
       axiosError.message ??
       'No pudimos completar la solicitud.'
     );

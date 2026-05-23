@@ -75,6 +75,12 @@ export interface UrlResponse {
   kind: string | null;
 }
 
+export interface UrlPayload {
+  url: string;
+  description?: string | null;
+  kind: string;
+}
+
 export interface EnrichedEvent extends EventResponse {
   category?: CategoryResponse;
   siteUrl?: UrlResponse;

@@ -9,6 +9,7 @@ import { Select } from '../../components/common/Select';
 import { Textarea } from '../../components/common/Textarea';
 import type { CategoryResponse, EventPayload, EventResponse, UrlResponse } from '../../types/event';
 import { getApiErrorMessage } from '../../api/httpClient';
+import { useAuth } from '../../auth/useAuth';
 import { EventPreviewCard } from './EventPreviewCard';
 
 type FormState = {
@@ -58,6 +59,7 @@ function fromEvent(event?: EventResponse): FormState {
 }
 
 export function EventForm({ initialEvent, submitLabel, successMessage, onSubmit }: EventFormProps) {
+  const { session } = useAuth();
   const [form, setForm] = useState<FormState>(() => fromEvent(initialEvent));
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [urls, setUrls] = useState<UrlResponse[]>([]);
@@ -76,7 +78,7 @@ export function EventForm({ initialEvent, submitLabel, successMessage, onSubmit 
       try {
         const [categoryPage, urlPage] = await Promise.all([getEventTypes(), getUrls()]);
         setCategories(categoryPage.content);
-        setUrls(urlPage.content);
+        setUrls(urlPage.content.filter((url) => url.ownerId === session?.userId));
         setCatalogError(null);
       } catch (error) {
         setCatalogError(getApiErrorMessage(error));
@@ -84,7 +86,7 @@ export function EventForm({ initialEvent, submitLabel, successMessage, onSubmit 
     }
 
     void loadCatalogs();
-  }, []);
+  }, [session?.userId]);
 
   const selectedCategory = categories.find((category) => category.id === form.categoryId);
   const selectedSiteUrl = urls.find((url) => url.id === form.siteUrlId);
