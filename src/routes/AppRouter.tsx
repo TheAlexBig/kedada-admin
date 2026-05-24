@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { useAuth } from '../auth/useAuth';
 import { AdminLayout } from '../components/admin/AdminLayout';
+import { LoadingState } from '../components/common/LoadingState';
 import { EventTypesPage } from '../features/catalogs/EventTypesPage';
 import { MediaPage } from '../features/catalogs/MediaPage';
 import { UrlsPage } from '../features/catalogs/UrlsPage';
@@ -16,7 +17,11 @@ import { EventListPage } from '../features/events/EventListPage';
 import { SchedulesPage } from '../features/schedules/SchedulesPage';
 
 function AdminRouteGuard({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { checkingSession, isAuthenticated } = useAuth();
+
+  if (checkingSession) {
+    return <LoadingState label="Validando sesion..." />;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
