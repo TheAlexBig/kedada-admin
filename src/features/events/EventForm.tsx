@@ -5,7 +5,6 @@ import { getEventTypes } from '../../api/eventTypeService';
 import { Button, ButtonLink } from '../../components/common/Button';
 import { ErrorState, SuccessMessage } from '../../components/common/StatusMessage';
 import { Input } from '../../components/common/Input';
-import { Select } from '../../components/common/Select';
 import { Textarea } from '../../components/common/Textarea';
 import type { CategoryResponse, EventPayload, EventResponse, ScheduleResponse, UrlResponse } from '../../types/event';
 import { getApiErrorMessage } from '../../api/httpClient';
@@ -17,7 +16,7 @@ type FormState = {
   priority: string;
   thumbnail: string;
   price: string;
-  categoryId: string;
+  categoryIds: string[];
 };
 
 const emptyForm: FormState = {
@@ -26,7 +25,7 @@ const emptyForm: FormState = {
   priority: '1',
   thumbnail: '',
   price: '',
-  categoryId: '',
+  categoryIds: [],
 };
 
 type EventFormProps = {
@@ -86,7 +85,7 @@ function fromEvent(event?: EventResponse): FormState {
     priority: String(event.priority ?? 1),
     thumbnail: event.thumbnail ?? '',
     price: event.price === null || event.price === undefined ? '' : String(event.price),
-    categoryId: event.categoryId ?? '',
+    categoryIds: event.categoryIds ?? [],
   };
 }
 
@@ -168,7 +167,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
     void loadCatalogs();
   }, []);
 
-  const selectedCategory = categories.find((category) => category.id === form.categoryId);
+  const selectedCategories = categories.filter((category) => form.categoryIds.includes(category.id));
 
   const previewEvent = useMemo(
     () => ({
@@ -177,16 +176,27 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
       priority: Number(form.priority || 1),
       thumbnail: form.thumbnail || null,
       price: form.price === '' ? null : Number(form.price),
-      categoryId: form.categoryId,
+      categoryIds: form.categoryIds,
       createdAt: initialEvent?.createdAt,
     }),
     [form, initialEvent?.createdAt],
   );
 
-  function updateField(name: keyof FormState, value: string) {
+  function updateField(name: Exclude<keyof FormState, 'categoryIds'>, value: string) {
     setForm((current) => ({ ...current, [name]: value }));
     setSaved(false);
     setFieldErrors((current) => ({ ...current, [name]: undefined }));
+  }
+
+  function toggleCategory(categoryId: string) {
+    setForm((current) => ({
+      ...current,
+      categoryIds: current.categoryIds.includes(categoryId)
+        ? current.categoryIds.filter((id) => id !== categoryId)
+        : [...current.categoryIds, categoryId],
+    }));
+    setFieldErrors((current) => ({ ...current, categoryIds: undefined }));
+    setSaved(false);
   }
 
   function updateSchedule(index: number, name: keyof Omit<ScheduleRow, 'id'>, value: string) {
@@ -248,8 +258,8 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
       nextErrors.title = 'El titulo debe tener maximo 100 caracteres.';
     }
 
-    if (!form.categoryId) {
-      nextErrors.categoryId = 'Selecciona un tipo de evento.';
+    if (form.categoryIds.length === 0) {
+      nextErrors.categoryIds = 'Selecciona al menos un tipo de evento.';
     }
 
     if (Number(form.priority) < 1 || Number.isNaN(Number(form.priority))) {
@@ -329,7 +339,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
       priority: Number(form.priority || 1),
       thumbnail: form.thumbnail || null,
       price: form.price === '' ? null : Number(form.price),
-      categoryId: form.categoryId,
+      categoryIds: form.categoryIds,
     };
     const schedulePayloads = schedules
       .filter((schedule) => schedule.id || schedule.startDate || schedule.endDate)
@@ -408,21 +418,33 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
           />
         </div>
 
-        <Select
-          label="Tipo de evento"
-          name="categoryId"
-          required
-          value={form.categoryId}
-          error={fieldErrors.categoryId}
-          onChange={(event) => updateField('categoryId', event.target.value)}
-        >
-          <option value="">Selecciona un tipo</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </Select>
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-semibold text-stone-800">
+            Tipos de evento <span className="text-rose-700">*</span>
+          </legend>
+          <p className="text-sm text-stone-600">Selecciona al menos una categoria; puedes asignar varias.</p>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <label
+                key={category.id}
+                className={`cursor-pointer rounded-md border px-3 py-2 text-sm font-medium transition ${
+                  form.categoryIds.includes(category.id)
+                    ? 'border-teal-600 bg-teal-50 text-teal-900'
+                    : 'border-stone-300 bg-white text-stone-700 hover:border-stone-400'
+                }`}
+              >
+                <input
+                  className="mr-2 align-middle"
+                  type="checkbox"
+                  checked={form.categoryIds.includes(category.id)}
+                  onChange={() => toggleCategory(category.id)}
+                />
+                {category.name}
+              </label>
+            ))}
+          </div>
+          {fieldErrors.categoryIds && <p className="text-sm text-red-600">{fieldErrors.categoryIds}</p>}
+        </fieldset>
 
         <Input
           label="Imagen"
@@ -539,7 +561,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
           <p className="text-sm font-bold text-stone-950">Vista previa</p>
           <p className="mt-1 text-sm text-stone-600">Aproximacion de la tarjeta publica del evento.</p>
         </div>
-        <EventPreviewCard event={previewEvent} category={selectedCategory} primaryUrl={urls.find((url) => url.url.trim())} />
+        <EventPreviewCard event={previewEvent} categories={selectedCategories} primaryUrl={urls.find((url) => url.url.trim())} />
       </aside>
     </div>
   );

@@ -7,7 +7,7 @@ export interface EventResponse {
   priority: number | null;
   thumbnail: UUID | null;
   price: number | null;
-  categoryId: UUID;
+  categoryIds: UUID[];
   ownerId: UUID | null;
   createdAt: string;
   updatedAt: string;
@@ -19,7 +19,7 @@ export interface EventPayload {
   priority?: number | null;
   thumbnail?: UUID | null;
   price?: number | null;
-  categoryId: UUID;
+  categoryIds: UUID[];
 }
 
 export type EventUpdatePayload = Partial<EventPayload>;
@@ -80,6 +80,6 @@ export interface UrlPayload {
 }
 
 export interface EnrichedEvent extends EventResponse {
-  category?: CategoryResponse;
+  categories?: CategoryResponse[];
   urls?: UrlResponse[];
 }

@@ -20,7 +20,7 @@ export function EventDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [event, setEvent] = useState<EventResponse | null>(null);
-  const [category, setCategory] = useState<CategoryResponse | undefined>();
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [urls, setUrls] = useState<UrlResponse[]>([]);
   const [schedules, setSchedules] = useState<ScheduleResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,13 +48,13 @@ export function EventDetailPage() {
         setEvent(loadedEvent);
         setError(null);
 
-        const [loadedCategory, loadedUrls, loadedSchedules] = await Promise.all([
-          getEventTypeById(loadedEvent.categoryId).catch(() => undefined),
+        const [loadedCategories, loadedUrls, loadedSchedules] = await Promise.all([
+          Promise.all(loadedEvent.categoryIds.map((categoryId) => getEventTypeById(categoryId).catch(() => undefined))),
           getUrlsForEvent(loadedEvent.id).catch(() => undefined),
           getSchedulesForEvent(loadedEvent.id).catch(() => undefined),
         ]);
 
-        setCategory(loadedCategory);
+        setCategories(loadedCategories.filter((category): category is CategoryResponse => category !== undefined));
         setUrls(loadedUrls?.content ?? []);
         setSchedules(loadedSchedules?.content ?? []);
       } catch (loadError) {
@@ -128,7 +128,7 @@ export function EventDetailPage() {
         <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
           <dl className="grid gap-5 sm:grid-cols-2">
             <DetailItem label="Titulo" value={event.title} />
-            <DetailItem label="Tipo" value={category?.name ?? 'Sin tipo cargado'} />
+            <DetailItem label="Tipos" value={categories.map((category) => category.name).join(', ') || 'Sin tipos cargados'} />
             <DetailItem label="Prioridad" value={String(event.priority ?? 1)} />
             <DetailItem label="Precio" value={formatCurrency(event.price)} />
             <DetailItem label="Creado" value={formatDate(event.createdAt)} />
@@ -156,7 +156,7 @@ export function EventDetailPage() {
 
         <aside className="space-y-3">
           <p className="text-sm font-bold text-stone-950">Vista previa</p>
-          <EventPreviewCard event={previewPayload} category={category} primaryUrl={urls[0]} />
+          <EventPreviewCard event={previewPayload} categories={categories} primaryUrl={urls[0]} />
         </aside>
       </div>
 

@@ -5,11 +5,11 @@ import { formatCurrency, formatDate, truncate } from '../../utils/formatters';
 
 type EventPreviewCardProps = {
   event: Partial<EventPayload> & { createdAt?: string };
-  category?: CategoryResponse;
+  categories?: CategoryResponse[];
   primaryUrl?: { url: string };
 };
 
-export function EventPreviewCard({ event, category, primaryUrl }: EventPreviewCardProps) {
+export function EventPreviewCard({ event, categories, primaryUrl }: EventPreviewCardProps) {
   return (
     <article className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
       <div className="aspect-[16/9] bg-gradient-to-br from-rose-100 via-amber-100 to-teal-100">
@@ -26,12 +26,12 @@ export function EventPreviewCard({ event, category, primaryUrl }: EventPreviewCa
 
       <div className="p-5">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          {category?.name && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
+          {categories?.map((category) => (
+            <span key={category.id} className="inline-flex items-center gap-1 rounded-md bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
               <Tag className="h-3.5 w-3.5" />
               {category.name}
             </span>
-          )}
+          ))}
           {event.priority && event.priority > 1 && (
             <span className="rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
               Prioridad {event.priority}

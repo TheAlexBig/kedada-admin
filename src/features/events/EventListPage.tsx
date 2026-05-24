@@ -149,7 +149,7 @@ export function EventListPage() {
               <thead className="bg-stone-50 text-left text-xs font-bold uppercase tracking-wide text-stone-500">
                 <tr>
                   <th className="px-4 py-3">Titulo</th>
-                  <th className="px-4 py-3">Tipo</th>
+                  <th className="px-4 py-3">Tipos</th>
                   <th className="px-4 py-3">Prioridad</th>
                   <th className="px-4 py-3">Precio</th>
                   <th className="px-4 py-3">Fecha de creacion</th>
@@ -161,7 +161,9 @@ export function EventListPage() {
                 {events.map((event) => (
                   <tr key={event.id} className="hover:bg-stone-50">
                     <td className="px-4 py-3 font-semibold text-stone-950">{event.title}</td>
-                    <td className="px-4 py-3 text-stone-700">{categoryById.get(event.categoryId) ?? 'Sin tipo'}</td>
+                    <td className="px-4 py-3 text-stone-700">
+                      {event.categoryIds.map((categoryId) => categoryById.get(categoryId)).filter(Boolean).join(', ') || 'Sin tipo'}
+                    </td>
                     <td className="px-4 py-3 text-stone-700">{event.priority ?? 1}</td>
                     <td className="px-4 py-3 text-stone-700">{formatCurrency(event.price)}</td>
                     <td className="px-4 py-3 text-stone-700">{formatDate(event.createdAt)}</td>
