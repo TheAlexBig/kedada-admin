@@ -2,14 +2,17 @@ import { Image, LayoutDashboard, Tags } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 
+import { useI18n } from '../../i18n/I18nContext';
+
 const items = [
-  { label: 'Dashboard', to: '/admin', icon: LayoutDashboard },
+  { label: 'Panel principal', to: '/admin', icon: LayoutDashboard },
   { label: 'Eventos', to: '/admin/events', icon: Tags },
   { label: 'Tipos de evento', to: '/admin/event-types', icon: Tags },
-  { label: 'Media / Imagenes', to: '/admin/media', icon: Image },
+  { label: 'Medios / Imagenes', to: '/admin/media', icon: Image },
 ];
 
 export function AdminSidebar() {
+  const { t } = useI18n();
   return (
     <aside className="border-r border-stone-200 bg-white lg:min-h-screen">
       <div className="flex h-16 items-center border-b border-stone-200 px-5">
@@ -32,7 +35,7 @@ export function AdminSidebar() {
             }
           >
             <item.icon className="h-4 w-4" />
-            {item.label}
+            {t(item.label)}
           </NavLink>
         ))}
       </nav>

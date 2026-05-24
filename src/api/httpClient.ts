@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios';
 
 import { getStoredSession } from '../auth/sessionStorage';
 import type { ApiErrorBody } from '../types/api';
+import type { Language } from '../i18n/I18nContext';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
@@ -29,7 +30,7 @@ export function compactParams(params: object) {
   );
 }
 
-export function getApiErrorMessage(error: unknown): string {
+export function getApiErrorMessage(error: unknown, language: Language = 'es'): string {
   if (axios.isAxiosError<ApiErrorBody>(error)) {
     const axiosError = error as AxiosError<ApiErrorBody>;
     const data = axiosError.response?.data;
@@ -40,10 +41,10 @@ export function getApiErrorMessage(error: unknown): string {
       fieldMessage ??
       data?.message ??
       data?.error ??
-      (status === 403 ? 'No tienes permisos para completar esta accion. Revisa que hayas iniciado sesion y que el recurso pertenezca a tu usuario.' : undefined) ??
-      (status === 401 ? 'Tu sesion expiro o no es valida. Inicia sesion nuevamente.' : undefined) ??
+      (status === 403 ? language === 'es' ? 'No tienes permisos para completar esta accion. Revisa que hayas iniciado sesion y que el recurso pertenezca a tu usuario.' : 'You do not have permission to complete this action. Confirm that you are signed in and own this resource.' : undefined) ??
+      (status === 401 ? language === 'es' ? 'Tu sesion expiro o no es valida. Inicia sesion nuevamente.' : 'Your session has expired or is invalid. Sign in again.' : undefined) ??
       axiosError.message ??
-      'No pudimos completar la solicitud.'
+      (language === 'es' ? 'No pudimos completar la solicitud.' : 'We could not complete the request.')
     );
   }
 
@@ -51,5 +52,5 @@ export function getApiErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return 'No pudimos completar la solicitud.';
+  return language === 'es' ? 'No pudimos completar la solicitud.' : 'We could not complete the request.';
 }

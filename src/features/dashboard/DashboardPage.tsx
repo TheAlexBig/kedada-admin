@@ -10,8 +10,10 @@ import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/StatusMessage';
 import type { EventResponse } from '../../types/event';
 import { formatDate } from '../../utils/formatters';
+import { useI18n } from '../../i18n/I18nContext';
 
 export function DashboardPage() {
+  const { language, t } = useI18n();
   const [events, setEvents] = useState<EventResponse[]>([]);
   const [totalEvents, setTotalEvents] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -26,17 +28,17 @@ export function DashboardPage() {
         setTotalEvents(page.totalElements);
         setError(null);
       } catch (loadError) {
-        setError(getApiErrorMessage(loadError));
+        setError(getApiErrorMessage(loadError, language));
       } finally {
         setLoading(false);
       }
     }
 
     void loadDashboard();
-  }, []);
+  }, [language]);
 
   if (loading) {
-    return <LoadingState label="Cargando dashboard..." />;
+    return <LoadingState label={t('Cargando panel principal...')} />;
   }
 
   if (error) {
@@ -47,18 +49,18 @@ export function DashboardPage() {
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-[1fr_auto]">
         <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-stone-500">Total de eventos</p>
+          <p className="text-sm font-semibold text-stone-500">{t('Total de eventos')}</p>
           <p className="mt-2 text-4xl font-black text-stone-950">{totalEvents}</p>
-          <p className="mt-2 text-sm text-stone-600">Eventos activos disponibles en la API.</p>
+          <p className="mt-2 text-sm text-stone-600">{t('Eventos activos disponibles en la API.')}</p>
         </div>
         <div className="rounded-lg border border-rose-100 bg-rose-50 p-5">
           <CalendarPlus className="h-8 w-8 text-rose-700" />
-          <h2 className="mt-3 text-lg font-bold text-stone-950">Crear evento</h2>
+          <h2 className="mt-3 text-lg font-bold text-stone-950">{t('Crear evento')}</h2>
           <p className="mt-1 max-w-sm text-sm leading-6 text-stone-600">
-            Agrega un nuevo evento con tipo, precio, enlaces y vista previa antes de publicarlo.
+            {t('Agrega un nuevo evento con tipo, precio, enlaces y vista previa antes de publicarlo.')}
           </p>
           <ButtonLink to="/admin/events/new" className="mt-4">
-            Crear evento
+            {t('Crear evento')}
           </ButtonLink>
         </div>
       </section>
@@ -66,16 +68,16 @@ export function DashboardPage() {
       <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-stone-950">Eventos recientes</h2>
-            <p className="text-sm text-stone-600">Ultimos eventos creados en Kedada.</p>
+            <h2 className="text-lg font-bold text-stone-950">{t('Eventos recientes')}</h2>
+            <p className="text-sm text-stone-600">{t('Ultimos eventos creados en Kedada.')}</p>
           </div>
           <Link to="/admin/events" className="inline-flex items-center gap-1 text-sm font-semibold text-rose-700">
-            Ver todos <ArrowRight className="h-4 w-4" />
+            {t('Ver todos')} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
         {events.length === 0 ? (
-          <EmptyState title="No se encontraron eventos" description="Crea el primer evento para empezar." />
+          <EmptyState title={t('No se encontraron eventos')} description={t('Crea el primer evento para empezar.')} />
         ) : (
           <div className="divide-y divide-stone-200">
             {events.map((event) => (
@@ -86,7 +88,7 @@ export function DashboardPage() {
               >
                 <div>
                   <p className="font-semibold text-stone-950">{event.title}</p>
-                  <p className="mt-1 text-sm text-stone-600">Creado {formatDate(event.createdAt)}</p>
+                  <p className="mt-1 text-sm text-stone-600">{t('Creado')} {formatDate(event.createdAt, language)}</p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-stone-400" />
               </Link>

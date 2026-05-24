@@ -7,8 +7,10 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { ErrorState } from '../../components/common/StatusMessage';
 import { AuthShell } from './AuthShell';
+import { useI18n } from '../../i18n/I18nContext';
 
 export function RegisterPage() {
+  const { language, t } = useI18n();
   const navigate = useNavigate();
   const { isAuthenticated, register } = useAuth();
   const [name, setName] = useState('');
@@ -26,7 +28,7 @@ export function RegisterPage() {
     event.preventDefault();
 
     if (password.length < 8) {
-      setFieldError('La contrasena debe tener al menos 8 caracteres.');
+      setFieldError(t('La contrasena debe tener al menos 8 caracteres.'));
       return;
     }
 
@@ -37,18 +39,18 @@ export function RegisterPage() {
       await register({ name, email, password });
       navigate('/admin');
     } catch (registerError) {
-      setError(getApiErrorMessage(registerError));
+      setError(getApiErrorMessage(registerError, language));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <AuthShell title="Crear cuenta" description="Registra una cuenta para administrar tus propios eventos y catalogos.">
+    <AuthShell title={t('Crear cuenta')} description={t('Registra una cuenta para administrar tus propios eventos y catalogos.')}>
       <form className="space-y-4" onSubmit={handleSubmit}>
         {error && <ErrorState message={error} />}
         <Input
-          label="Nombre"
+          label={t('Nombre')}
           name="name"
           required
           maxLength={100}
@@ -57,7 +59,7 @@ export function RegisterPage() {
           onChange={(event) => setName(event.target.value)}
         />
         <Input
-          label="Correo electronico"
+          label={t('Correo electronico')}
           name="email"
           type="email"
           required
@@ -66,7 +68,7 @@ export function RegisterPage() {
           onChange={(event) => setEmail(event.target.value)}
         />
         <Input
-          label="Contrasena"
+          label={t('Contrasena')}
           name="password"
           type="password"
           required
@@ -75,20 +77,20 @@ export function RegisterPage() {
           maxLength={72}
           value={password}
           error={fieldError ?? undefined}
-          helperText="Debe tener entre 8 y 72 caracteres."
+          helperText={t('Debe tener entre 8 y 72 caracteres.')}
           onChange={(event) => {
             setPassword(event.target.value);
             setFieldError(null);
           }}
         />
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+          {loading ? t('Creando cuenta...') : t('Crear cuenta')}
         </Button>
       </form>
       <p className="mt-5 text-center text-sm text-stone-600">
-        Ya tienes cuenta?{' '}
+        {t('Ya tienes cuenta?')}{' '}
         <Link to="/login" className="font-semibold text-rose-700 hover:text-rose-800">
-          Iniciar sesion
+          {t('Iniciar sesion')}
         </Link>
       </p>
     </AuthShell>

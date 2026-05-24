@@ -7,8 +7,10 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { ErrorState } from '../../components/common/StatusMessage';
 import { AuthShell } from './AuthShell';
+import { useI18n } from '../../i18n/I18nContext';
 
 export function LoginPage() {
+  const { language, t } = useI18n();
   const navigate = useNavigate();
   const { isAuthenticated, login } = useAuth();
   const [email, setEmail] = useState('');
@@ -29,18 +31,18 @@ export function LoginPage() {
       await login({ email, password });
       navigate('/admin');
     } catch (loginError) {
-      setError(getApiErrorMessage(loginError));
+      setError(getApiErrorMessage(loginError, language));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <AuthShell title="Iniciar sesion" description="Ingresa con tu cuenta para crear y editar contenido.">
+    <AuthShell title={t('Iniciar sesion')} description={t('Ingresa con tu cuenta para crear y editar contenido.')}>
       <form className="space-y-4" onSubmit={handleSubmit}>
         {error && <ErrorState message={error} />}
         <Input
-          label="Correo electronico"
+          label={t('Correo electronico')}
           name="email"
           type="email"
           required
@@ -49,7 +51,7 @@ export function LoginPage() {
           onChange={(event) => setEmail(event.target.value)}
         />
         <Input
-          label="Contrasena"
+          label={t('Contrasena')}
           name="password"
           type="password"
           required
@@ -58,13 +60,13 @@ export function LoginPage() {
           onChange={(event) => setPassword(event.target.value)}
         />
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Ingresando...' : 'Ingresar'}
+          {loading ? t('Ingresando...') : t('Ingresar')}
         </Button>
       </form>
       <p className="mt-5 text-center text-sm text-stone-600">
-        No tienes cuenta?{' '}
+        {t('No tienes cuenta?')}{' '}
         <Link to="/register" className="font-semibold text-rose-700 hover:text-rose-800">
-          Crear cuenta
+          {t('Crear cuenta')}
         </Link>
       </p>
     </AuthShell>

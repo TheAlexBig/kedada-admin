@@ -14,12 +14,14 @@ import { EventDetailPage } from '../features/events/EventDetailPage';
 import { EventEditPage } from '../features/events/EventEditPage';
 import { EventListPage } from '../features/events/EventListPage';
 import { SchedulesPage } from '../features/schedules/SchedulesPage';
+import { useI18n } from '../i18n/I18nContext';
 
 function AdminRouteGuard({ children }: { children: ReactNode }) {
   const { checkingSession, isAuthenticated } = useAuth();
+  const { t } = useI18n();
 
   if (checkingSession) {
-    return <LoadingState label="Validando sesion..." />;
+    return <LoadingState label={t('Validando sesion...')} />;
   }
 
   if (!isAuthenticated) {

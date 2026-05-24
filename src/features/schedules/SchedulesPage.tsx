@@ -14,6 +14,7 @@ import { Select } from '../../components/common/Select';
 import { ErrorState, SuccessMessage } from '../../components/common/StatusMessage';
 import type { EventResponse, ScheduleResponse } from '../../types/event';
 import { formatDate } from '../../utils/formatters';
+import { useI18n } from '../../i18n/I18nContext';
 
 type ScheduleFormState = {
   eventId: string;
@@ -57,6 +58,7 @@ function fromSchedule(schedule: ScheduleResponse): ScheduleFormState {
 export function SchedulesPage() {
   const { eventId } = useParams();
   const isEventScoped = Boolean(eventId);
+  const { language, t } = useI18n();
   const [schedules, setSchedules] = useState<ScheduleResponse[]>([]);
   const [events, setEvents] = useState<EventResponse[]>([]);
   const [parentEvent, setParentEvent] = useState<EventResponse | null>(null);
@@ -87,11 +89,11 @@ export function SchedulesPage() {
       setTotalPages(schedulePage.totalPages);
       setError(null);
     } catch (loadError) {
-      setError(getApiErrorMessage(loadError));
+      setError(getApiErrorMessage(loadError, language));
     } finally {
       setLoading(false);
     }
-  }, [eventId, page]);
+  }, [eventId, language, page]);
 
   useEffect(() => {
     async function loadEvents() {
@@ -134,11 +136,11 @@ export function SchedulesPage() {
     const nextErrors: Partial<Record<keyof ScheduleFormState, string>> = {};
 
     if (!form.startDate) {
-      nextErrors.startDate = 'La fecha de inicio es requerida.';
+      nextErrors.startDate = t('La fecha de inicio es requerida.');
     }
 
     if (form.endDate && form.startDate && new Date(form.endDate) <= new Date(form.startDate)) {
-      nextErrors.endDate = 'La fecha final debe ser posterior al inicio.';
+      nextErrors.endDate = t('La fecha final debe ser posterior al inicio.');
     }
 
     setFieldErrors(nextErrors);
@@ -171,10 +173,10 @@ export function SchedulesPage() {
       }
 
       resetForm();
-      setSuccess(wasEditing ? 'Schedule actualizado correctamente.' : 'Schedule creado correctamente.');
+      setSuccess(wasEditing ? t('Horario actualizado correctamente.') : t('Horario creado correctamente.'));
       await loadSchedules(page);
     } catch (saveError) {
-      setError(getApiErrorMessage(saveError));
+      setError(getApiErrorMessage(saveError, language));
     } finally {
       setSaving(false);
     }
@@ -202,10 +204,10 @@ export function SchedulesPage() {
       if (editingId === deleteTarget.id) {
         resetForm();
       }
-      setSuccess('Schedule eliminado correctamente.');
+      setSuccess(t('Horario eliminado correctamente.'));
       await loadSchedules(page);
     } catch (deleteError) {
-      setError(getApiErrorMessage(deleteError));
+      setError(getApiErrorMessage(deleteError, language));
     } finally {
       setDeleting(false);
     }
@@ -216,16 +218,16 @@ export function SchedulesPage() {
       <div>
         {isEventScoped && (
           <Link className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-rose-700" to={`/admin/events/${eventId}`}>
-            <ArrowLeft className="h-4 w-4" /> Volver al evento
+            <ArrowLeft className="h-4 w-4" /> {t('Volver al evento')}
           </Link>
         )}
         <h2 className="text-2xl font-black text-stone-950">
-          {parentEvent ? `Schedules: ${parentEvent.title}` : 'Schedules'}
+          {parentEvent ? t('Horarios: {title}', { title: parentEvent.title }) : t('Horarios')}
         </h2>
         <p className="mt-1 text-sm text-stone-600">
           {isEventScoped
-            ? 'Administra solamente las fechas conectadas a este evento.'
-            : 'Administra fechas de eventos conectadas al endpoint /api/v1/schedules.'}
+            ? t('Administra solamente las fechas conectadas a este evento.')
+            : t('Administra fechas de eventos conectadas al endpoint /api/v1/schedules.')}
         </p>
       </div>
 
@@ -233,27 +235,27 @@ export function SchedulesPage() {
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-bold text-stone-950">
-              {editingId ? 'Editar schedule' : 'Crear schedule'}
+              {editingId ? t('Editar horario') : t('Crear horario')}
             </h3>
-            <p className="mt-1 text-sm text-stone-600">Conecta una fecha con un evento publicado.</p>
+            <p className="mt-1 text-sm text-stone-600">{t('Conecta una fecha con un evento publicado.')}</p>
           </div>
           {editingId && (
             <Button type="button" variant="ghost" onClick={resetForm}>
-              <X className="h-4 w-4" /> Cancelar edicion
+              <X className="h-4 w-4" /> {t('Cancelar edicion')}
             </Button>
           )}
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[1fr_220px_220px_auto]">
           <Select
-            label="Evento"
+            label={t('Evento')}
             name="eventId"
             value={form.eventId}
             disabled={isEventScoped}
-            helperText={isEventScoped ? 'Este schedule pertenece al evento seleccionado.' : 'Selecciona el evento de esta fecha.'}
+            helperText={isEventScoped ? t('Este horario pertenece al evento seleccionado.') : t('Selecciona el evento de esta fecha.')}
             onChange={(event) => updateField('eventId', event.target.value)}
           >
-            {!isEventScoped && <option value="">Sin evento conectado</option>}
+            {!isEventScoped && <option value="">{t('Sin evento conectado')}</option>}
             {events.map((event) => (
               <option key={event.id} value={event.id}>
                 {event.title}
@@ -261,7 +263,7 @@ export function SchedulesPage() {
             ))}
           </Select>
           <Input
-            label="Inicio"
+            label={t('Inicio')}
             name="startDate"
             type="datetime-local"
             required
@@ -270,7 +272,7 @@ export function SchedulesPage() {
             onChange={(event) => updateField('startDate', event.target.value)}
           />
           <Input
-            label="Fin"
+            label={t('Fin')}
             name="endDate"
             type="datetime-local"
             value={form.endDate}
@@ -279,7 +281,7 @@ export function SchedulesPage() {
           />
           <div className="flex items-end">
             <Button type="submit" className="w-full" disabled={saving}>
-              {saving ? 'Guardando...' : editingId ? 'Actualizar' : 'Guardar'}
+              {saving ? t('Guardando...') : editingId ? t('Actualizar') : t('Guardar')}
             </Button>
           </div>
         </div>
@@ -288,19 +290,19 @@ export function SchedulesPage() {
       {success && <SuccessMessage message={success} />}
       {error && <ErrorState message={error} />}
       {loading ? (
-        <LoadingState label="Cargando schedules..." />
+        <LoadingState label={t('Cargando horarios...')} />
       ) : schedules.length === 0 ? (
-        <EmptyState title="No hay schedules" description="Crea el primer schedule para conectar fechas con eventos." />
+        <EmptyState title={t('No hay horarios')} description={t('Crea el primer horario para conectar fechas con eventos.')} />
       ) : (
         <div className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-stone-200 text-sm">
               <thead className="bg-stone-50 text-left text-xs font-bold uppercase tracking-wide text-stone-500">
                 <tr>
-                  <th className="px-4 py-3">Evento</th>
-                  <th className="px-4 py-3">Inicio</th>
-                  <th className="px-4 py-3">Fin</th>
-                  <th className="px-4 py-3 text-right">Acciones</th>
+                  <th className="px-4 py-3">{t('Evento')}</th>
+                  <th className="px-4 py-3">{t('Inicio')}</th>
+                  <th className="px-4 py-3">{t('Fin')}</th>
+                  <th className="px-4 py-3 text-right">{t('Acciones')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-200">
@@ -312,17 +314,17 @@ export function SchedulesPage() {
                           {eventById.get(schedule.eventId) ?? schedule.eventId}
                         </Link>
                       ) : (
-                        'Sin evento'
+                        t('Sin evento')
                       )}
                     </td>
-                    <td className="px-4 py-3 text-stone-700">{formatDate(schedule.startDate)}</td>
-                    <td className="px-4 py-3 text-stone-700">{formatDate(schedule.endDate)}</td>
+                    <td className="px-4 py-3 text-stone-700">{formatDate(schedule.startDate, language)}</td>
+                    <td className="px-4 py-3 text-stone-700">{formatDate(schedule.endDate, language)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         <button
                           className="rounded-md p-2 text-stone-600 hover:bg-stone-100"
                           type="button"
-                          title="Editar"
+                          title={t('Editar')}
                           onClick={() => startEdit(schedule)}
                         >
                           <Pencil className="h-4 w-4" />
@@ -330,7 +332,7 @@ export function SchedulesPage() {
                         <button
                           className="rounded-md p-2 text-red-600 hover:bg-red-50"
                           type="button"
-                          title="Eliminar"
+                          title={t('Eliminar')}
                           onClick={() => setDeleteTarget(schedule)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -344,10 +346,10 @@ export function SchedulesPage() {
           </div>
           {!isEventScoped && <div className="flex items-center justify-between border-t border-stone-200 px-4 py-3 text-sm text-stone-600">
             <Button type="button" variant="secondary" disabled={page === 0} onClick={() => setPage((current) => current - 1)}>
-              Anterior
+              {t('Anterior')}
             </Button>
             <span>
-              Pagina {page + 1} de {Math.max(totalPages, 1)}
+              {t('Pagina')} {page + 1} {t('de')} {Math.max(totalPages, 1)}
             </span>
             <Button
               type="button"
@@ -355,7 +357,7 @@ export function SchedulesPage() {
               disabled={page + 1 >= totalPages}
               onClick={() => setPage((current) => current + 1)}
             >
-              Siguiente
+              {t('Siguiente')}
             </Button>
           </div>}
         </div>
@@ -363,8 +365,8 @@ export function SchedulesPage() {
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
-        title="Eliminar schedule"
-        description="¿Estas seguro de que deseas eliminar este schedule?"
+        title={t('Eliminar horario')}
+        description={t('Estas seguro de que deseas eliminar este horario?')}
         loading={deleting}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}

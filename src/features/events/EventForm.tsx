@@ -9,6 +9,7 @@ import { Textarea } from '../../components/common/Textarea';
 import type { CategoryResponse, EventPayload, EventResponse, ScheduleResponse, UrlResponse } from '../../types/event';
 import { getApiErrorMessage } from '../../api/httpClient';
 import { EventPreviewCard } from './EventPreviewCard';
+import { useI18n } from '../../i18n/I18nContext';
 
 type FormState = {
   title: string;
@@ -129,6 +130,7 @@ function fromUrls(urls?: UrlResponse[]): UrlRow[] {
 }
 
 export function EventForm({ initialEvent, initialSchedules, initialUrls, submitLabel, successMessage, onSubmit }: EventFormProps) {
+  const { language, t } = useI18n();
   const [form, setForm] = useState<FormState>(() => fromEvent(initialEvent));
   const [schedules, setSchedules] = useState<ScheduleRow[]>(() => fromSchedules(initialSchedules));
   const [urls, setUrls] = useState<UrlRow[]>(() => fromUrls(initialUrls));
@@ -160,12 +162,12 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
         setCategories(categoryPage.content);
         setCatalogError(null);
       } catch (error) {
-        setCatalogError(getApiErrorMessage(error));
+        setCatalogError(getApiErrorMessage(error, language));
       }
     }
 
     void loadCatalogs();
-  }, []);
+  }, [language]);
 
   const selectedCategories = categories.filter((category) => form.categoryIds.includes(category.id));
 
@@ -253,21 +255,21 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
     const nextUrlErrors: UrlErrors[] = urls.map(() => ({}));
 
     if (!form.title.trim()) {
-      nextErrors.title = 'El titulo es requerido.';
+      nextErrors.title = t('El titulo es requerido.');
     } else if (form.title.trim().length > 100) {
-      nextErrors.title = 'El titulo debe tener maximo 100 caracteres.';
+      nextErrors.title = t('El titulo debe tener maximo 100 caracteres.');
     }
 
     if (form.categoryIds.length === 0) {
-      nextErrors.categoryIds = 'Selecciona al menos un tipo de evento.';
+      nextErrors.categoryIds = t('Selecciona al menos un tipo de evento.');
     }
 
     if (Number(form.priority) < 1 || Number.isNaN(Number(form.priority))) {
-      nextErrors.priority = 'La prioridad debe ser 1 o mayor.';
+      nextErrors.priority = t('La prioridad debe ser 1 o mayor.');
     }
 
     if (form.price !== '' && (Number(form.price) < 0 || Number.isNaN(Number(form.price)))) {
-      nextErrors.price = 'El precio debe ser 0 o mayor.';
+      nextErrors.price = t('El precio debe ser 0 o mayor.');
     }
 
     schedules.forEach((schedule, index) => {
@@ -277,15 +279,15 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
       }
 
       if (!schedule.startDate) {
-        nextScheduleErrors[index].startDate = 'La fecha de inicio es requerida.';
+        nextScheduleErrors[index].startDate = t('La fecha de inicio es requerida.');
       } else if (Number.isNaN(new Date(schedule.startDate).getTime())) {
-        nextScheduleErrors[index].startDate = 'Ingresa una fecha de inicio valida.';
+        nextScheduleErrors[index].startDate = t('Ingresa una fecha de inicio valida.');
       }
 
       if (schedule.endDate && Number.isNaN(new Date(schedule.endDate).getTime())) {
-        nextScheduleErrors[index].endDate = 'Ingresa una fecha final valida.';
+        nextScheduleErrors[index].endDate = t('Ingresa una fecha final valida.');
       } else if (schedule.endDate && schedule.startDate && new Date(schedule.endDate) <= new Date(schedule.startDate)) {
-        nextScheduleErrors[index].endDate = 'La fecha final debe ser posterior al inicio.';
+        nextScheduleErrors[index].endDate = t('La fecha final debe ser posterior al inicio.');
       }
     });
 
@@ -296,23 +298,23 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
       }
 
       if (!url.url.trim()) {
-        nextUrlErrors[index].url = 'La URL es requerida.';
+        nextUrlErrors[index].url = t('La URL es requerida.');
       } else {
         try {
           new URL(url.url.trim());
         } catch {
-          nextUrlErrors[index].url = 'Ingresa una URL valida, incluyendo http:// o https://.';
+          nextUrlErrors[index].url = t('Ingresa una URL valida, incluyendo http:// o https://.');
         }
       }
 
       if (!url.kind.trim()) {
-        nextUrlErrors[index].kind = 'El tipo es requerido.';
+        nextUrlErrors[index].kind = t('El tipo es requerido.');
       } else if (url.kind.trim().length > 20) {
-        nextUrlErrors[index].kind = 'El tipo debe tener maximo 20 caracteres.';
+        nextUrlErrors[index].kind = t('El tipo debe tener maximo 20 caracteres.');
       }
 
       if (url.description.trim().length > 100) {
-        nextUrlErrors[index].description = 'La descripcion debe tener maximo 100 caracteres.';
+        nextUrlErrors[index].description = t('La descripcion debe tener maximo 100 caracteres.');
       }
     });
 
@@ -363,7 +365,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
       await onSubmit(payload, schedulePayloads, urlPayloads);
       setSaved(true);
     } catch (error) {
-      setFormError(getApiErrorMessage(error));
+      setFormError(getApiErrorMessage(error, language));
     } finally {
       setSaving(false);
     }
@@ -372,23 +374,23 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <form className="space-y-5 rounded-lg border border-stone-200 bg-white p-5 shadow-sm" onSubmit={handleSubmit}>
-        {catalogError && <ErrorState message={`No se pudieron cargar los catalogos: ${catalogError}`} />}
+        {catalogError && <ErrorState message={t('No se pudieron cargar los catalogos: {error}', { error: catalogError })} />}
         {formError && <ErrorState message={formError} />}
         {saved && <SuccessMessage message={successMessage} />}
 
         <Input
-          label="Titulo"
+          label={t('Titulo')}
           name="title"
           required
           maxLength={100}
           value={form.title}
           error={fieldErrors.title}
-          helperText="Maximo 100 caracteres."
+          helperText={t('Maximo 100 caracteres.')}
           onChange={(event) => updateField('title', event.target.value)}
         />
 
         <Textarea
-          label="Descripcion"
+          label={t('Descripcion')}
           name="description"
           value={form.description}
           onChange={(event) => updateField('description', event.target.value)}
@@ -396,7 +398,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
-            label="Prioridad"
+            label={t('Prioridad')}
             name="priority"
             type="number"
             min={1}
@@ -406,23 +408,23 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
             onChange={(event) => updateField('priority', event.target.value)}
           />
           <Input
-            label="Precio"
+            label={t('Precio')}
             name="price"
             type="number"
             min={0}
             step="0.01"
             value={form.price}
             error={fieldErrors.price}
-            helperText="Dejalo vacio si el precio no esta publicado."
+            helperText={t('Dejalo vacio si el precio no esta publicado.')}
             onChange={(event) => updateField('price', event.target.value)}
           />
         </div>
 
         <fieldset className="space-y-2">
           <legend className="text-sm font-semibold text-stone-800">
-            Tipos de evento <span className="text-rose-700">*</span>
+            {t('Tipos de evento')} <span className="text-rose-700">*</span>
           </legend>
-          <p className="text-sm text-stone-600">Selecciona al menos una categoria; puedes asignar varias.</p>
+          <p className="text-sm text-stone-600">{t('Selecciona al menos una categoria; puedes asignar varias.')}</p>
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
               <label
@@ -447,28 +449,28 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
         </fieldset>
 
         <Input
-          label="Imagen"
+          label={t('Imagen')}
           name="thumbnail"
           value={form.thumbnail}
-          helperText="El backend aun no tiene carga de imagenes; usa un UUID existente si aplica."
+          helperText={t('El backend aun no tiene carga de imagenes; usa un UUID existente si aplica.')}
           onChange={(event) => updateField('thumbnail', event.target.value)}
         />
 
         <section className="space-y-4 rounded-md border border-stone-200 bg-stone-50 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-stone-900">Fechas / Schedules</p>
-              <p className="mt-1 text-sm text-stone-600">Agrega todas las fechas en las que este evento estara disponible.</p>
+              <p className="text-sm font-semibold text-stone-900">{t('Horarios / Fechas')}</p>
+              <p className="mt-1 text-sm text-stone-600">{t('Agrega todas las fechas en las que este evento estara disponible.')}</p>
             </div>
             <Button type="button" variant="secondary" onClick={addSchedule}>
-              <Plus className="h-4 w-4" /> Agregar fecha
+              <Plus className="h-4 w-4" /> {t('Agregar horario')}
             </Button>
           </div>
 
           {schedules.map((schedule, index) => (
             <div key={schedule.id ?? index} className="grid items-start gap-3 rounded-md border border-stone-200 bg-white p-3 sm:grid-cols-[1fr_1fr_auto]">
               <Input
-                label={`Inicio ${index + 1}`}
+                label={`${t('Inicio')} ${index + 1}`}
                 name={`schedule-${index}-start`}
                 type="datetime-local"
                 value={schedule.startDate}
@@ -476,7 +478,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
                 onChange={(event) => updateSchedule(index, 'startDate', event.target.value)}
               />
               <Input
-                label="Fin"
+                label={t('Fin')}
                 name={`schedule-${index}-end`}
                 type="datetime-local"
                 value={schedule.endDate}
@@ -486,7 +488,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
               <button
                 className="mt-8 rounded-md p-2 text-red-600 hover:bg-red-50"
                 type="button"
-                title="Eliminar fecha"
+                title={t('Eliminar horario')}
                 onClick={() => removeSchedule(index)}
               >
                 <Trash2 className="h-4 w-4" />
@@ -498,11 +500,11 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
         <section className="space-y-4 rounded-md border border-stone-200 bg-stone-50 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-stone-900">Enlaces / URLs</p>
-              <p className="mt-1 text-sm text-stone-600">Agrega todos los enlaces externos relacionados con este evento.</p>
+              <p className="text-sm font-semibold text-stone-900">{t('Enlaces / URLs')}</p>
+              <p className="mt-1 text-sm text-stone-600">{t('Agrega todos los enlaces externos relacionados con este evento.')}</p>
             </div>
             <Button type="button" variant="secondary" onClick={addUrl}>
-              <Plus className="h-4 w-4" /> Agregar enlace
+              <Plus className="h-4 w-4" /> {t('Agregar enlace')}
             </Button>
           </div>
 
@@ -518,7 +520,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
                   onChange={(event) => updateUrl(index, 'url', event.target.value)}
                 />
                 <Input
-                  label="Tipo"
+                  label={t('Tipo')}
                   name={`url-${index}-kind`}
                   maxLength={20}
                   value={url.kind}
@@ -528,14 +530,14 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
                 <button
                   className="mt-8 rounded-md p-2 text-red-600 hover:bg-red-50"
                   type="button"
-                  title="Eliminar enlace"
+                  title={t('Eliminar enlace')}
                   onClick={() => removeUrl(index)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
               <Input
-                label="Descripcion"
+                label={t('Descripcion')}
                 name={`url-${index}-description`}
                 maxLength={100}
                 value={url.description}
@@ -548,18 +550,18 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
 
         <div className="flex flex-wrap justify-end gap-3 border-t border-stone-200 pt-5">
           <ButtonLink to="/admin/events" variant="secondary">
-            Cancelar
+            {t('Cancelar')}
           </ButtonLink>
           <Button type="submit" disabled={saving}>
-            {saving ? 'Guardando...' : submitLabel}
+            {saving ? t('Guardando...') : submitLabel}
           </Button>
         </div>
       </form>
 
       <aside className="space-y-3">
         <div>
-          <p className="text-sm font-bold text-stone-950">Vista previa</p>
-          <p className="mt-1 text-sm text-stone-600">Aproximacion de la tarjeta publica del evento.</p>
+          <p className="text-sm font-bold text-stone-950">{t('Vista previa')}</p>
+          <p className="mt-1 text-sm text-stone-600">{t('Aproximacion de la tarjeta publica del evento.')}</p>
         </div>
         <EventPreviewCard event={previewEvent} categories={selectedCategories} primaryUrl={urls.find((url) => url.url.trim())} />
       </aside>

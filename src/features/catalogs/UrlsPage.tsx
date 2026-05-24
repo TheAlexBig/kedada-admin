@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { ExternalLink, Pencil, Trash2, X } from 'lucide-react';
 
 import { getApiErrorMessage } from '../../api/httpClient';
@@ -11,6 +11,7 @@ import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState, SuccessMessage } from '../../components/common/StatusMessage';
 import { useAuth } from '../../auth/useAuth';
 import type { UrlResponse } from '../../types/event';
+import { useI18n } from '../../i18n/I18nContext';
 
 type FieldErrors = {
   url?: string;
@@ -20,6 +21,7 @@ type FieldErrors = {
 
 export function UrlsPage() {
   const { session } = useAuth();
+  const { language, t } = useI18n();
   const [urls, setUrls] = useState<UrlResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,22 +35,22 @@ export function UrlsPage() {
   const [deleting, setDeleting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-  async function loadUrls() {
+  const loadUrls = useCallback(async () => {
     try {
       setLoading(true);
       const page = await getUrls();
       setUrls(page.content);
       setError(null);
     } catch (loadError) {
-      setError(getApiErrorMessage(loadError));
+      setError(getApiErrorMessage(loadError, language));
     } finally {
       setLoading(false);
     }
-  }
+  }, [language]);
 
   useEffect(() => {
     void loadUrls();
-  }, []);
+  }, [loadUrls]);
 
   function validate() {
     const nextErrors: FieldErrors = {};
@@ -56,23 +58,23 @@ export function UrlsPage() {
     const trimmedKind = kind.trim();
 
     if (!trimmedUrl) {
-      nextErrors.url = 'La URL es requerida.';
+      nextErrors.url = t('La URL es requerida.');
     } else {
       try {
         new URL(trimmedUrl);
       } catch {
-        nextErrors.url = 'Ingresa una URL valida, incluyendo http:// o https://.';
+        nextErrors.url = t('Ingresa una URL valida, incluyendo http:// o https://.');
       }
     }
 
     if (!trimmedKind) {
-      nextErrors.kind = 'El tipo es requerido.';
+      nextErrors.kind = t('El tipo es requerido.');
     } else if (trimmedKind.length > 20) {
-      nextErrors.kind = 'El tipo debe tener maximo 20 caracteres.';
+      nextErrors.kind = t('El tipo debe tener maximo 20 caracteres.');
     }
 
     if (description.trim().length > 100) {
-      nextErrors.description = 'La descripcion debe tener maximo 100 caracteres.';
+      nextErrors.description = t('La descripcion debe tener maximo 100 caracteres.');
     }
 
     setFieldErrors(nextErrors);
@@ -114,9 +116,9 @@ export function UrlsPage() {
         return next.sort((a, b) => (a.kind ?? '').localeCompare(b.kind ?? '') || a.url.localeCompare(b.url));
       });
       resetForm();
-      setSuccess(wasEditing ? 'Enlace actualizado correctamente.' : 'Enlace creado correctamente.');
+      setSuccess(wasEditing ? t('Enlace actualizado correctamente.') : t('Enlace creado correctamente.'));
     } catch (saveError) {
-      setError(getApiErrorMessage(saveError));
+      setError(getApiErrorMessage(saveError, language));
     } finally {
       setSaving(false);
     }
@@ -147,32 +149,32 @@ export function UrlsPage() {
         resetForm();
       }
       setDeleteTarget(null);
-      setSuccess('Enlace eliminado correctamente.');
+      setSuccess(t('Enlace eliminado correctamente.'));
     } catch (deleteError) {
-      setError(getApiErrorMessage(deleteError));
+      setError(getApiErrorMessage(deleteError, language));
     } finally {
       setDeleting(false);
     }
   }
 
   if (loading) {
-    return <LoadingState label="Cargando enlaces..." />;
+    return <LoadingState label={t('Cargando enlaces...')} />;
   }
 
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-black text-stone-950">URLs / Enlaces</h2>
+        <h2 className="text-2xl font-black text-stone-950">{t('URLs / Enlaces')}</h2>
         <p className="mt-1 text-sm text-stone-600">
-          Administra los enlaces externos que puedes asociar a eventos.
+          {t('Administra los enlaces externos que puedes asociar a eventos.')}
         </p>
       </div>
 
       <form className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm" onSubmit={handleSave}>
         <div className="mb-4">
-          <h3 className="text-lg font-bold text-stone-950">{editingId ? 'Editar enlace' : 'Crear enlace'}</h3>
+          <h3 className="text-lg font-bold text-stone-950">{editingId ? t('Editar enlace') : t('Crear enlace')}</h3>
           <p className="mt-1 text-sm text-stone-600">
-            Usa tipos cortos como official, ticket, instagram o reference para organizarlos.
+            {t('Usa tipos cortos como official, ticket, instagram o reference para organizarlos.')}
           </p>
         </div>
 
@@ -191,20 +193,20 @@ export function UrlsPage() {
             }}
           />
           <Input
-            label="Descripcion"
+            label={t('Descripcion')}
             name="description"
             maxLength={100}
-            placeholder="Sitio oficial"
+            placeholder={t('Sitio oficial')}
             value={description}
             error={fieldErrors.description}
-            helperText="Opcional. Maximo 100 caracteres."
+            helperText={t('Opcional. Maximo 100 caracteres.')}
             onChange={(event) => {
               setDescription(event.target.value);
               setFieldErrors((current) => ({ ...current, description: undefined }));
             }}
           />
           <Input
-            label="Tipo"
+            label={t('Tipo')}
             name="kind"
             required
             maxLength={20}
@@ -219,15 +221,15 @@ export function UrlsPage() {
         </div>
 
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs text-stone-500">La propiedad del enlace se asigna automaticamente desde tu sesion.</p>
+          <p className="text-xs text-stone-500">{t('La propiedad del enlace se asigna automaticamente desde tu sesion.')}</p>
           <div className="flex flex-wrap gap-2">
             {editingId && (
               <Button type="button" variant="ghost" onClick={resetForm}>
-                <X className="h-4 w-4" /> Cancelar edicion
+                <X className="h-4 w-4" /> {t('Cancelar edicion')}
               </Button>
             )}
             <Button type="submit" disabled={saving}>
-              {saving ? 'Guardando...' : editingId ? 'Actualizar' : 'Guardar'}
+              {saving ? t('Guardando...') : editingId ? t('Actualizar') : t('Guardar')}
             </Button>
           </div>
         </div>
@@ -237,16 +239,16 @@ export function UrlsPage() {
       {error && <ErrorState message={error} />}
 
       {urls.length === 0 ? (
-        <EmptyState title="No hay enlaces" description="Crea el primer enlace para asociarlo a eventos." />
+        <EmptyState title={t('No hay enlaces')} description={t('Crea el primer enlace para asociarlo a eventos.')} />
       ) : (
         <div className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
           <table className="min-w-full divide-y divide-stone-200 text-sm">
             <thead className="bg-stone-50 text-left text-xs font-bold uppercase tracking-wide text-stone-500">
               <tr>
-                <th className="px-4 py-3">Descripcion</th>
-                <th className="px-4 py-3">Tipo</th>
+                <th className="px-4 py-3">{t('Descripcion')}</th>
+                <th className="px-4 py-3">{t('Tipo')}</th>
                 <th className="px-4 py-3">URL</th>
-                <th className="px-4 py-3 text-right">Acciones</th>
+                <th className="px-4 py-3 text-right">{t('Acciones')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-200">
@@ -256,10 +258,10 @@ export function UrlsPage() {
                 return (
                   <tr key={item.id}>
                     <td className="px-4 py-3 font-semibold text-stone-950">
-                      <div>{item.description || 'Sin descripcion'}</div>
-                      {!canManage && <div className="mt-1 text-xs font-medium text-stone-500">Solo lectura</div>}
+                      <div>{item.description || t('Sin descripcion')}</div>
+                      {!canManage && <div className="mt-1 text-xs font-medium text-stone-500">{t('Solo lectura')}</div>}
                     </td>
-                    <td className="px-4 py-3 text-stone-700">{item.kind || 'Sin tipo'}</td>
+                    <td className="px-4 py-3 text-stone-700">{item.kind || t('Sin tipo')}</td>
                     <td className="px-4 py-3">
                       <a
                         href={item.url}
@@ -275,7 +277,7 @@ export function UrlsPage() {
                         <button
                           className="rounded-md p-2 text-stone-600 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40"
                           type="button"
-                          title={canManage ? 'Editar' : 'No puedes editar enlaces de otro usuario'}
+                          title={canManage ? t('Editar') : t('No puedes editar enlaces de otro usuario')}
                           disabled={!canManage}
                           onClick={() => startEdit(item)}
                         >
@@ -284,7 +286,7 @@ export function UrlsPage() {
                         <button
                           className="rounded-md p-2 text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
                           type="button"
-                          title={canManage ? 'Eliminar' : 'No puedes eliminar enlaces de otro usuario'}
+                          title={canManage ? t('Eliminar') : t('No puedes eliminar enlaces de otro usuario')}
                           disabled={!canManage}
                           onClick={() => setDeleteTarget(item)}
                         >
@@ -302,8 +304,8 @@ export function UrlsPage() {
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
-        title="Eliminar enlace"
-        description="¿Estas seguro de que deseas eliminar este enlace? Si tiene eventos activos asociados, el backend rechazara la operacion."
+        title={t('Eliminar enlace')}
+        description={t('Estas seguro de que deseas eliminar este enlace? Si tiene eventos activos asociados, el backend rechazara la operacion.')}
         loading={deleting}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}

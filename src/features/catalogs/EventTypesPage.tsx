@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Pencil, Trash2, X } from 'lucide-react';
 
 import { createEventType, deleteEventType, getEventTypes, updateEventType } from '../../api/eventTypeService';
@@ -10,8 +10,10 @@ import { Input } from '../../components/common/Input';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState, SuccessMessage } from '../../components/common/StatusMessage';
 import type { CategoryResponse } from '../../types/event';
+import { useI18n } from '../../i18n/I18nContext';
 
 export function EventTypesPage() {
+  const { language, t } = useI18n();
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -26,28 +28,28 @@ export function EventTypesPage() {
     name?: string;
   }>({});
 
-  async function loadCategories() {
+  const loadCategories = useCallback(async () => {
     try {
       setLoading(true);
       const page = await getEventTypes();
       setCategories(page.content);
       setError(null);
     } catch (loadError) {
-      setError(getApiErrorMessage(loadError));
+      setError(getApiErrorMessage(loadError, language));
     } finally {
       setLoading(false);
     }
-  }
+  }, [language]);
 
   useEffect(() => {
     void loadCategories();
-  }, []);
+  }, [loadCategories]);
 
   function validate() {
     const nextErrors: typeof fieldErrors = {};
 
     if (!name.trim()) {
-      nextErrors.name = 'El nombre es requerido.';
+      nextErrors.name = t('El nombre es requerido.');
     }
 
     setFieldErrors(nextErrors);
@@ -92,9 +94,9 @@ export function EventTypesPage() {
         return next.sort((a, b) => a.name.localeCompare(b.name));
       });
       resetForm();
-      setSuccess(wasEditing ? 'Tipo de evento actualizado correctamente.' : 'Tipo de evento creado correctamente.');
+      setSuccess(wasEditing ? t('Tipo de evento actualizado correctamente.') : t('Tipo de evento creado correctamente.'));
     } catch (saveError) {
-      setError(getApiErrorMessage(saveError));
+      setError(getApiErrorMessage(saveError, language));
     } finally {
       setSaving(false);
     }
@@ -124,43 +126,43 @@ export function EventTypesPage() {
         resetForm();
       }
       setDeleteTarget(null);
-      setSuccess('Tipo de evento eliminado correctamente.');
+      setSuccess(t('Tipo de evento eliminado correctamente.'));
     } catch (deleteError) {
-      setError(getApiErrorMessage(deleteError));
+      setError(getApiErrorMessage(deleteError, language));
     } finally {
       setDeleting(false);
     }
   }
 
   if (loading) {
-    return <LoadingState label="Cargando tipos de evento..." />;
+    return <LoadingState label={t('Cargando tipos de evento...')} />;
   }
 
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-black text-stone-950">Tipos de evento</h2>
+        <h2 className="text-2xl font-black text-stone-950">{t('Tipos de evento')}</h2>
         <p className="mt-1 text-sm text-stone-600">
-          El backend los expone como categorias en <code>/api/v1/categories</code>.
+          {t('El backend los expone como categorias en')} <code>/api/v1/categories</code>.
         </p>
       </div>
 
       <form className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm" onSubmit={handleSave}>
         <div className="mb-4">
           <h3 className="text-lg font-bold text-stone-950">
-            {editingId ? 'Editar tipo de evento' : 'Crear tipo de evento'}
+            {editingId ? t('Editar tipo de evento') : t('Crear tipo de evento')}
           </h3>
           <p className="mt-1 text-sm text-stone-600">
-            Estos tipos apareceran en el selector del formulario de eventos.
+            {t('Estos tipos apareceran en el selector del formulario de eventos.')}
           </p>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]">
           <Input
-            label="Nombre"
+            label={t('Nombre')}
             name="name"
             required
-            placeholder="Conciertos, Teatro, Gastronomia"
+            placeholder={t('Conciertos, Teatro, Gastronomia')}
             value={name}
             error={fieldErrors.name}
             onChange={(event) => {
@@ -169,28 +171,28 @@ export function EventTypesPage() {
             }}
           />
           <Input
-            label="Clasificacion"
+            label={t('Clasificacion')}
             name="type"
             placeholder="concert, festival"
             value={type}
-            helperText="Opcional. Separa varios valores con coma."
+            helperText={t('Opcional. Separa varios valores con coma.')}
             onChange={(event) => setType(event.target.value)}
           />
           <div className="flex items-end">
             <Button type="submit" className="w-full" disabled={saving}>
-              {saving ? 'Guardando...' : editingId ? 'Actualizar' : 'Guardar'}
+              {saving ? t('Guardando...') : editingId ? t('Actualizar') : t('Guardar')}
             </Button>
           </div>
         </div>
 
         {editingId && (
           <Button type="button" variant="ghost" onClick={resetForm}>
-            <X className="h-4 w-4" /> Cancelar edicion
+            <X className="h-4 w-4" /> {t('Cancelar edicion')}
           </Button>
         )}
 
         <p className="mt-4 text-xs text-stone-500">
-          La propiedad del tipo se asigna automaticamente desde tu sesion.
+          {t('La propiedad del tipo se asigna automaticamente desde tu sesion.')}
         </p>
       </form>
 
@@ -198,28 +200,28 @@ export function EventTypesPage() {
       {error && <ErrorState message={error} />}
 
       {categories.length === 0 ? (
-        <EmptyState title="No hay tipos de evento" description="Crea el primer tipo para usarlo en eventos." />
+        <EmptyState title={t('No hay tipos de evento')} description={t('Crea el primer tipo para usarlo en eventos.')} />
       ) : (
         <div className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
           <table className="min-w-full divide-y divide-stone-200 text-sm">
             <thead className="bg-stone-50 text-left text-xs font-bold uppercase tracking-wide text-stone-500">
               <tr>
-                <th className="px-4 py-3">Nombre</th>
-                <th className="px-4 py-3">Clasificacion</th>
-                <th className="px-4 py-3 text-right">Acciones</th>
+                <th className="px-4 py-3">{t('Nombre')}</th>
+                <th className="px-4 py-3">{t('Clasificacion')}</th>
+                <th className="px-4 py-3 text-right">{t('Acciones')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-200">
               {categories.map((category) => (
                 <tr key={category.id}>
                   <td className="px-4 py-3 font-semibold text-stone-950">{category.name}</td>
-                  <td className="px-4 py-3 text-stone-700">{category.type?.join(', ') || 'Sin clasificacion'}</td>
+                  <td className="px-4 py-3 text-stone-700">{category.type?.join(', ') || t('Sin clasificacion')}</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <button
                         className="rounded-md p-2 text-stone-600 hover:bg-stone-100"
                         type="button"
-                        title="Editar"
+                        title={t('Editar')}
                         onClick={() => startEdit(category)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -227,7 +229,7 @@ export function EventTypesPage() {
                       <button
                         className="rounded-md p-2 text-red-600 hover:bg-red-50"
                         type="button"
-                        title="Eliminar"
+                        title={t('Eliminar')}
                         onClick={() => setDeleteTarget(category)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -243,8 +245,8 @@ export function EventTypesPage() {
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
-        title="Eliminar tipo de evento"
-        description="¿Estas seguro de que deseas eliminar este tipo? Si tiene eventos activos asociados, el backend rechazara la operacion."
+        title={t('Eliminar tipo de evento')}
+        description={t('Estas seguro de que deseas eliminar este tipo? Si tiene eventos activos asociados, el backend rechazara la operacion.')}
         loading={deleting}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}

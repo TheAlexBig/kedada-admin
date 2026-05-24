@@ -1,4 +1,5 @@
 import { Button } from './Button';
+import { useI18n } from '../../i18n/I18nContext';
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -14,11 +15,13 @@ export function ConfirmDialog({
   open,
   title,
   description,
-  confirmLabel = 'Eliminar',
+  confirmLabel,
   loading = false,
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) {
+  const { t } = useI18n();
+
   if (!open) {
     return null;
   }
@@ -30,10 +33,10 @@ export function ConfirmDialog({
         <p className="mt-2 text-sm leading-6 text-stone-600">{description}</p>
         <div className="mt-6 flex justify-end gap-3">
           <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
-            Cancelar
+            {t('Cancelar')}
           </Button>
           <Button type="button" variant="danger" onClick={onConfirm} disabled={loading}>
-            {loading ? 'Eliminando...' : confirmLabel}
+            {loading ? t('Eliminando...') : confirmLabel ?? t('Eliminar')}
           </Button>
         </div>
       </div>
