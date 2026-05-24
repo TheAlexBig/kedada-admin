@@ -2,7 +2,11 @@ import { apiClient } from './httpClient';
 import type { ListParams, PageResponse, UUID } from '../types/api';
 import type { SchedulePayload, ScheduleResponse } from '../types/event';
 
-export async function getSchedules(params: ListParams = { page: 0, size: 100, sort: 'startDate,asc' }) {
+type ScheduleListParams = ListParams & {
+  eventId?: UUID;
+};
+
+export async function getSchedules(params: ScheduleListParams = { page: 0, size: 100, sort: 'startDate,asc' }) {
   const response = await apiClient.get<PageResponse<ScheduleResponse>>('/api/v1/schedules', {
     params,
   });
@@ -16,11 +20,19 @@ export async function getScheduleById(id: UUID) {
 }
 
 export async function getSchedulesForEvent(eventId: UUID, params: ListParams = { page: 0, size: 100, sort: 'startDate,asc' }) {
-  const page = await getSchedules(params);
+  const firstPage = await getSchedules({ ...params, eventId, page: 0 });
+  const remainingPages = await Promise.all(
+    Array.from({ length: Math.max(firstPage.totalPages - 1, 0) }, (_, index) =>
+      getSchedules({ ...params, eventId, page: index + 1 }),
+    ),
+  );
+  const content = [firstPage, ...remainingPages].flatMap((page) => page.content);
 
   return {
-    ...page,
-    content: page.content.filter((schedule) => schedule.eventId === eventId),
+    ...firstPage,
+    content,
+    totalElements: content.length,
+    totalPages: content.length === 0 ? 0 : 1,
   };
 }
 

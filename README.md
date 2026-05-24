@@ -30,6 +30,7 @@ Main routes:
 - `/admin/events/new`
 - `/admin/events/:id`
 - `/admin/events/:id/edit`
+- `/admin/events/:eventId/schedules`
 
 ## Backend
 

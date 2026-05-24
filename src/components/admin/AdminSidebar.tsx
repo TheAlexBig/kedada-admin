@@ -1,13 +1,11 @@
-import { CalendarDays, Image, LayoutDashboard, Link as LinkIcon, Tags } from 'lucide-react';
+import { Image, LayoutDashboard, Tags } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 
 const items = [
   { label: 'Dashboard', to: '/admin', icon: LayoutDashboard },
   { label: 'Eventos', to: '/admin/events', icon: Tags },
-  { label: 'Schedules', to: '/admin/schedules', icon: CalendarDays },
   { label: 'Tipos de evento', to: '/admin/event-types', icon: Tags },
-  { label: 'URLs / Enlaces', to: '/admin/urls', icon: LinkIcon },
   { label: 'Media / Imagenes', to: '/admin/media', icon: Image },
 ];
 

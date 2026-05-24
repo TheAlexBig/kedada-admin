@@ -1,14 +1,24 @@
 import { useNavigate } from 'react-router-dom';
 
 import { createEvent } from '../../api/eventService';
+import { createSchedule } from '../../api/scheduleService';
+import { createUrl } from '../../api/urlService';
 import type { EventPayload } from '../../types/event';
-import { EventForm } from './EventForm';
+import { EventForm, type EventScheduleValue, type EventUrlValue } from './EventForm';
 
 export function EventCreatePage() {
   const navigate = useNavigate();
 
-  async function handleCreate(payload: EventPayload) {
+  async function handleCreate(payload: EventPayload, schedules: EventScheduleValue[], urls: EventUrlValue[]) {
     const event = await createEvent(payload);
+    await Promise.all(
+      [
+        ...schedules.map((schedule) =>
+          createSchedule({ eventId: event.id, startDate: schedule.startDate, endDate: schedule.endDate }),
+        ),
+        ...urls.map((url) => createUrl({ ...url, eventId: event.id })),
+      ],
+    );
     navigate(`/admin/events/${event.id}`, { state: { message: 'Evento creado correctamente' } });
   }
 

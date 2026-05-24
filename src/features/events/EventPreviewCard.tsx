@@ -1,15 +1,15 @@
 import { Calendar, Tag } from 'lucide-react';
 
-import type { CategoryResponse, EventPayload, UrlResponse } from '../../types/event';
+import type { CategoryResponse, EventPayload } from '../../types/event';
 import { formatCurrency, formatDate, truncate } from '../../utils/formatters';
 
 type EventPreviewCardProps = {
   event: Partial<EventPayload> & { createdAt?: string };
   category?: CategoryResponse;
-  siteUrl?: UrlResponse;
+  primaryUrl?: { url: string };
 };
 
-export function EventPreviewCard({ event, category, siteUrl }: EventPreviewCardProps) {
+export function EventPreviewCard({ event, category, primaryUrl }: EventPreviewCardProps) {
   return (
     <article className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
       <div className="aspect-[16/9] bg-gradient-to-br from-rose-100 via-amber-100 to-teal-100">
@@ -58,7 +58,7 @@ export function EventPreviewCard({ event, category, siteUrl }: EventPreviewCardP
           <span className="inline-flex h-10 items-center justify-center rounded-md bg-stone-950 px-3 text-sm font-semibold text-white">
             Ver detalle
           </span>
-          {siteUrl?.url && (
+          {primaryUrl?.url && (
             <span className="inline-flex h-10 items-center justify-center rounded-md border border-stone-300 px-3 text-sm font-semibold text-stone-800">
               Sitio oficial
             </span>

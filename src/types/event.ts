@@ -7,8 +7,6 @@ export interface EventResponse {
   priority: number | null;
   thumbnail: UUID | null;
   price: number | null;
-  siteUrlId: UUID | null;
-  referenceUrlId: UUID | null;
   categoryId: UUID;
   ownerId: UUID | null;
   createdAt: string;
@@ -21,8 +19,6 @@ export interface EventPayload {
   priority?: number | null;
   thumbnail?: UUID | null;
   price?: number | null;
-  siteUrlId?: UUID | null;
-  referenceUrlId?: UUID | null;
   categoryId: UUID;
 }
 
@@ -69,6 +65,7 @@ export interface CategoryPayload {
 
 export interface UrlResponse {
   id: UUID;
+  eventId: UUID | null;
   url: string;
   description: string | null;
   ownerId: UUID | null;
@@ -76,6 +73,7 @@ export interface UrlResponse {
 }
 
 export interface UrlPayload {
+  eventId?: UUID | null;
   url: string;
   description?: string | null;
   kind: string;
@@ -83,6 +81,5 @@ export interface UrlPayload {
 
 export interface EnrichedEvent extends EventResponse {
   category?: CategoryResponse;
-  siteUrl?: UrlResponse;
-  referenceUrl?: UrlResponse;
+  urls?: UrlResponse[];
 }

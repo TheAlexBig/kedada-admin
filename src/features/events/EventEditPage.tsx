@@ -3,15 +3,19 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { getEventById, updateEvent } from '../../api/eventService';
 import { getApiErrorMessage } from '../../api/httpClient';
+import { createSchedule, deleteSchedule, getSchedulesForEvent, updateSchedule } from '../../api/scheduleService';
+import { createUrl, deleteUrl, getUrlsForEvent, updateUrl } from '../../api/urlService';
 import { LoadingState } from '../../components/common/LoadingState';
 import { ErrorState } from '../../components/common/StatusMessage';
-import type { EventPayload, EventResponse } from '../../types/event';
-import { EventForm } from './EventForm';
+import type { EventPayload, EventResponse, ScheduleResponse, UrlResponse } from '../../types/event';
+import { EventForm, type EventScheduleValue, type EventUrlValue } from './EventForm';
 
 export function EventEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [event, setEvent] = useState<EventResponse | null>(null);
+  const [schedules, setSchedules] = useState<ScheduleResponse[]>([]);
+  const [urls, setUrls] = useState<UrlResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +27,14 @@ export function EventEditPage() {
 
       try {
         setLoading(true);
-        setEvent(await getEventById(id));
+        const [loadedEvent, loadedSchedules, loadedUrls] = await Promise.all([
+          getEventById(id),
+          getSchedulesForEvent(id),
+          getUrlsForEvent(id),
+        ]);
+        setEvent(loadedEvent);
+        setSchedules(loadedSchedules.content);
+        setUrls(loadedUrls.content);
         setError(null);
       } catch (loadError) {
         setError(getApiErrorMessage(loadError));
@@ -35,12 +46,39 @@ export function EventEditPage() {
     void loadEvent();
   }, [id]);
 
-  async function handleUpdate(payload: EventPayload) {
+  async function handleUpdate(payload: EventPayload, nextSchedules: EventScheduleValue[], nextUrls: EventUrlValue[]) {
     if (!id) {
       return;
     }
 
     const updatedEvent = await updateEvent(id, payload);
+    const retainedIds = new Set(nextSchedules.flatMap((schedule) => schedule.id ? [schedule.id] : []));
+
+    await Promise.all(
+      nextSchedules.map((schedule) => {
+        const schedulePayload = {
+          eventId: id,
+          startDate: schedule.startDate,
+          endDate: schedule.endDate,
+        };
+
+        return schedule.id ? updateSchedule(schedule.id, schedulePayload) : createSchedule(schedulePayload);
+      }),
+    );
+    await Promise.all(
+      schedules.filter((schedule) => !retainedIds.has(schedule.id)).map((schedule) => deleteSchedule(schedule.id)),
+    );
+    const retainedUrlIds = new Set(nextUrls.flatMap((url) => url.id ? [url.id] : []));
+
+    await Promise.all(
+      nextUrls.map((url) => {
+        const urlPayload = { eventId: id, url: url.url, description: url.description, kind: url.kind };
+        return url.id ? updateUrl(url.id, urlPayload) : createUrl(urlPayload);
+      }),
+    );
+    await Promise.all(
+      urls.filter((url) => !retainedUrlIds.has(url.id)).map((url) => deleteUrl(url.id)),
+    );
     navigate(`/admin/events/${updatedEvent.id}`, { state: { message: 'Evento actualizado correctamente' } });
   }
 
@@ -64,6 +102,8 @@ export function EventEditPage() {
       </div>
       <EventForm
         initialEvent={event}
+        initialSchedules={schedules}
+        initialUrls={urls}
         submitLabel="Guardar"
         successMessage="Evento actualizado correctamente"
         onSubmit={handleUpdate}

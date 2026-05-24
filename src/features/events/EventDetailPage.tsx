@@ -6,7 +6,7 @@ import { deleteEvent, getEventById } from '../../api/eventService';
 import { getEventTypeById } from '../../api/eventTypeService';
 import { getApiErrorMessage } from '../../api/httpClient';
 import { getSchedulesForEvent } from '../../api/scheduleService';
-import { getUrlById } from '../../api/urlService';
+import { getUrlsForEvent } from '../../api/urlService';
 import { Button, ButtonLink } from '../../components/common/Button';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { LoadingState } from '../../components/common/LoadingState';
@@ -21,8 +21,7 @@ export function EventDetailPage() {
   const location = useLocation();
   const [event, setEvent] = useState<EventResponse | null>(null);
   const [category, setCategory] = useState<CategoryResponse | undefined>();
-  const [siteUrl, setSiteUrl] = useState<UrlResponse | undefined>();
-  const [referenceUrl, setReferenceUrl] = useState<UrlResponse | undefined>();
+  const [urls, setUrls] = useState<UrlResponse[]>([]);
   const [schedules, setSchedules] = useState<ScheduleResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,16 +48,14 @@ export function EventDetailPage() {
         setEvent(loadedEvent);
         setError(null);
 
-        const [loadedCategory, loadedSiteUrl, loadedReferenceUrl, loadedSchedules] = await Promise.all([
+        const [loadedCategory, loadedUrls, loadedSchedules] = await Promise.all([
           getEventTypeById(loadedEvent.categoryId).catch(() => undefined),
-          loadedEvent.siteUrlId ? getUrlById(loadedEvent.siteUrlId).catch(() => undefined) : undefined,
-          loadedEvent.referenceUrlId ? getUrlById(loadedEvent.referenceUrlId).catch(() => undefined) : undefined,
+          getUrlsForEvent(loadedEvent.id).catch(() => undefined),
           getSchedulesForEvent(loadedEvent.id).catch(() => undefined),
         ]);
 
         setCategory(loadedCategory);
-        setSiteUrl(loadedSiteUrl);
-        setReferenceUrl(loadedReferenceUrl);
+        setUrls(loadedUrls?.content ?? []);
         setSchedules(loadedSchedules?.content ?? []);
       } catch (loadError) {
         setError(getApiErrorMessage(loadError));
@@ -144,14 +141,22 @@ export function EventDetailPage() {
                 {event.description || 'Sin descripcion disponible.'}
               </dd>
             </div>
-            <UrlItem label="URL del sitio" url={siteUrl} />
-            <UrlItem label="URL de referencia" url={referenceUrl} />
+            <div className="sm:col-span-2">
+              <dt className="text-xs font-bold uppercase tracking-wide text-stone-500">Enlaces</dt>
+              {urls.length === 0 ? (
+                <dd className="mt-1 text-sm text-stone-900">Sin enlaces</dd>
+              ) : (
+                <dd className="mt-2 flex flex-col gap-2">
+                  {urls.map((url) => <UrlItem key={url.id} url={url} />)}
+                </dd>
+              )}
+            </div>
           </dl>
         </section>
 
         <aside className="space-y-3">
           <p className="text-sm font-bold text-stone-950">Vista previa</p>
-          <EventPreviewCard event={previewPayload} category={category} siteUrl={siteUrl} />
+          <EventPreviewCard event={previewPayload} category={category} primaryUrl={urls[0]} />
         </aside>
       </div>
 
@@ -161,7 +166,7 @@ export function EventDetailPage() {
             <h3 className="text-lg font-bold text-stone-950">Schedules conectados</h3>
             <p className="mt-1 text-sm text-stone-600">Fechas asociadas a este evento desde el API de schedules.</p>
           </div>
-          <ButtonLink to="/admin/schedules" variant="secondary">
+          <ButtonLink to={`/admin/events/${event.id}/schedules`} variant="secondary">
             Administrar schedules
           </ButtonLink>
         </div>
@@ -211,24 +216,15 @@ function DetailItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function UrlItem({ label, url }: { label: string; url?: UrlResponse }) {
+function UrlItem({ url }: { url: UrlResponse }) {
   return (
-    <div className="sm:col-span-2">
-      <dt className="text-xs font-bold uppercase tracking-wide text-stone-500">{label}</dt>
-      <dd className="mt-1 text-sm text-stone-900">
-        {url?.url ? (
-          <a
-            href={url.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-semibold text-rose-700 hover:text-rose-800"
-          >
-            {url.description || url.url} <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        ) : (
-          'Sin enlace'
-        )}
-      </dd>
-    </div>
+    <a
+      href={url.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 text-sm font-semibold text-rose-700 hover:text-rose-800"
+    >
+      {url.description || url.kind || url.url} <ExternalLink className="h-3.5 w-3.5" />
+    </a>
   );
 }

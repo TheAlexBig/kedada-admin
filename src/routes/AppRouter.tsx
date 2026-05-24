@@ -6,7 +6,6 @@ import { AdminLayout } from '../components/admin/AdminLayout';
 import { LoadingState } from '../components/common/LoadingState';
 import { EventTypesPage } from '../features/catalogs/EventTypesPage';
 import { MediaPage } from '../features/catalogs/MediaPage';
-import { UrlsPage } from '../features/catalogs/UrlsPage';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
@@ -49,9 +48,10 @@ export function AppRouter() {
         <Route path="events/new" element={<EventCreatePage />} />
         <Route path="events/:id" element={<EventDetailPage />} />
         <Route path="events/:id/edit" element={<EventEditPage />} />
-        <Route path="schedules" element={<SchedulesPage />} />
+        <Route path="events/:eventId/schedules" element={<SchedulesPage />} />
+        <Route path="schedules" element={<Navigate to="/admin/events" replace />} />
         <Route path="event-types" element={<EventTypesPage />} />
-        <Route path="urls" element={<UrlsPage />} />
+        <Route path="urls" element={<Navigate to="/admin/events" replace />} />
         <Route path="media" element={<MediaPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/admin" replace />} />

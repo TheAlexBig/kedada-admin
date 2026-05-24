@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Pencil, Trash2, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft, Pencil, Trash2, X } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
 
-import { getEvents } from '../../api/eventService';
+import { getEventById, getEvents } from '../../api/eventService';
 import { getApiErrorMessage } from '../../api/httpClient';
-import { createSchedule, deleteSchedule, getSchedules, updateSchedule } from '../../api/scheduleService';
+import { createSchedule, deleteSchedule, getSchedules, getSchedulesForEvent, updateSchedule } from '../../api/scheduleService';
 import { Button } from '../../components/common/Button';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -55,9 +55,12 @@ function fromSchedule(schedule: ScheduleResponse): ScheduleFormState {
 }
 
 export function SchedulesPage() {
+  const { eventId } = useParams();
+  const isEventScoped = Boolean(eventId);
   const [schedules, setSchedules] = useState<ScheduleResponse[]>([]);
   const [events, setEvents] = useState<EventResponse[]>([]);
-  const [form, setForm] = useState<ScheduleFormState>(emptyForm);
+  const [parentEvent, setParentEvent] = useState<EventResponse | null>(null);
+  const [form, setForm] = useState<ScheduleFormState>(() => ({ ...emptyForm, eventId: eventId ?? '' }));
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ScheduleFormState, string>>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ScheduleResponse | null>(null);
@@ -77,7 +80,9 @@ export function SchedulesPage() {
   const loadSchedules = useCallback(async (nextPage = page) => {
     try {
       setLoading(true);
-      const schedulePage = await getSchedules({ page: nextPage, size: 10, sort: 'startDate,asc' });
+      const schedulePage = eventId
+        ? await getSchedulesForEvent(eventId)
+        : await getSchedules({ page: nextPage, size: 10, sort: 'startDate,asc' });
       setSchedules(schedulePage.content);
       setTotalPages(schedulePage.totalPages);
       setError(null);
@@ -86,11 +91,19 @@ export function SchedulesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [eventId, page]);
 
   useEffect(() => {
     async function loadEvents() {
       try {
+        if (eventId) {
+          const loadedEvent = await getEventById(eventId);
+          setParentEvent(loadedEvent);
+          setEvents([loadedEvent]);
+          setForm((current) => ({ ...current, eventId }));
+          return;
+        }
+
         const eventPage = await getEvents({ page: 0, size: 100, sort: 'title,asc' });
         setEvents(eventPage.content);
       } catch {
@@ -99,7 +112,7 @@ export function SchedulesPage() {
     }
 
     void loadEvents();
-  }, []);
+  }, [eventId]);
 
   useEffect(() => {
     void loadSchedules(page);
@@ -112,7 +125,7 @@ export function SchedulesPage() {
   }
 
   function resetForm() {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, eventId: eventId ?? '' });
     setEditingId(null);
     setFieldErrors({});
   }
@@ -141,7 +154,7 @@ export function SchedulesPage() {
 
     const wasEditing = Boolean(editingId);
     const payload = {
-      eventId: form.eventId || null,
+      eventId: eventId ?? (form.eventId || null),
       startDate: toIsoDate(form.startDate),
       endDate: form.endDate ? toIsoDate(form.endDate) : null,
     };
@@ -201,9 +214,18 @@ export function SchedulesPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-black text-stone-950">Schedules</h2>
+        {isEventScoped && (
+          <Link className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-rose-700" to={`/admin/events/${eventId}`}>
+            <ArrowLeft className="h-4 w-4" /> Volver al evento
+          </Link>
+        )}
+        <h2 className="text-2xl font-black text-stone-950">
+          {parentEvent ? `Schedules: ${parentEvent.title}` : 'Schedules'}
+        </h2>
         <p className="mt-1 text-sm text-stone-600">
-          Administra fechas de eventos conectadas al endpoint <code>/api/v1/schedules</code>.
+          {isEventScoped
+            ? 'Administra solamente las fechas conectadas a este evento.'
+            : 'Administra fechas de eventos conectadas al endpoint /api/v1/schedules.'}
         </p>
       </div>
 
@@ -227,10 +249,11 @@ export function SchedulesPage() {
             label="Evento"
             name="eventId"
             value={form.eventId}
-            helperText="Opcional en el backend, recomendado para conectar el schedule."
+            disabled={isEventScoped}
+            helperText={isEventScoped ? 'Este schedule pertenece al evento seleccionado.' : 'Selecciona el evento de esta fecha.'}
             onChange={(event) => updateField('eventId', event.target.value)}
           >
-            <option value="">Sin evento conectado</option>
+            {!isEventScoped && <option value="">Sin evento conectado</option>}
             {events.map((event) => (
               <option key={event.id} value={event.id}>
                 {event.title}
@@ -319,7 +342,7 @@ export function SchedulesPage() {
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between border-t border-stone-200 px-4 py-3 text-sm text-stone-600">
+          {!isEventScoped && <div className="flex items-center justify-between border-t border-stone-200 px-4 py-3 text-sm text-stone-600">
             <Button type="button" variant="secondary" disabled={page === 0} onClick={() => setPage((current) => current - 1)}>
               Anterior
             </Button>
@@ -334,7 +357,7 @@ export function SchedulesPage() {
             >
               Siguiente
             </Button>
-          </div>
+          </div>}
         </div>
       )}
 
