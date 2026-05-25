@@ -124,13 +124,11 @@ export function EventDetailPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <ButtonLink to={`/admin/events/${event.id}/edit`}>
-            <Pencil className="h-4 w-4" /> {isOwner ? t('Editar') : t('Editar visibilidad')}
+            <Pencil className="h-4 w-4" /> {t('Editar')}
           </ButtonLink>
-          {isOwner && (
-            <Button type="button" variant="danger" onClick={() => setConfirmOpen(true)}>
-              <Trash2 className="h-4 w-4" /> {t('Eliminar')}
-            </Button>
-          )}
+          <Button type="button" variant="danger" onClick={() => setConfirmOpen(true)}>
+            <Trash2 className="h-4 w-4" /> {t('Eliminar')}
+          </Button>
         </div>
       </div>
 
@@ -183,9 +181,11 @@ export function EventDetailPage() {
             <h3 className="text-lg font-bold text-stone-950">{t('Horarios conectados')}</h3>
             <p className="mt-1 text-sm text-stone-600">{t('Fechas asociadas a este evento desde el API de horarios.')}</p>
           </div>
-          <ButtonLink to={`/admin/events/${event.id}/schedules`} variant="secondary">
-            {t('Administrar horarios')}
-          </ButtonLink>
+          {isOwner && (
+            <ButtonLink to={`/admin/events/${event.id}/schedules`} variant="secondary">
+              {t('Administrar horarios')}
+            </ButtonLink>
+          )}
         </div>
 
         {schedules.length === 0 ? (

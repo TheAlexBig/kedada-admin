@@ -38,6 +38,7 @@ type EventFormProps = {
   initialUrls?: UrlResponse[];
   submitLabel: string;
   successMessage: string;
+  manageRelated?: boolean;
   onSubmit: (payload: EventPayload, schedules: EventScheduleValue[], urls: EventUrlValue[]) => Promise<void>;
 };
 
@@ -133,7 +134,7 @@ function fromUrls(urls?: UrlResponse[]): UrlRow[] {
   }));
 }
 
-export function EventForm({ initialEvent, initialSchedules, initialUrls, submitLabel, successMessage, onSubmit }: EventFormProps) {
+export function EventForm({ initialEvent, initialSchedules, initialUrls, submitLabel, successMessage, manageRelated = true, onSubmit }: EventFormProps) {
   const { language, t } = useI18n();
   const [form, setForm] = useState<FormState>(() => fromEvent(initialEvent));
   const [schedules, setSchedules] = useState<ScheduleRow[]>(() => fromSchedules(initialSchedules));
@@ -552,7 +553,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
           {imageError && <p className="text-sm text-red-700">{imageError}</p>}
         </section>
 
-        <section className="space-y-4 rounded-md border border-stone-200 bg-stone-50 p-4">
+        {manageRelated && <section className="space-y-4 rounded-md border border-stone-200 bg-stone-50 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-stone-900">{t('Horarios / Fechas')}</p>
@@ -591,9 +592,9 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
               </button>
             </div>
           ))}
-        </section>
+        </section>}
 
-        <section className="space-y-4 rounded-md border border-stone-200 bg-stone-50 p-4">
+        {manageRelated && <section className="space-y-4 rounded-md border border-stone-200 bg-stone-50 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-stone-900">{t('Enlaces / URLs')}</p>
@@ -642,7 +643,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
               />
             </div>
           ))}
-        </section>
+        </section>}
 
         <div className="flex flex-wrap justify-end gap-3 border-t border-stone-200 pt-5">
           <ButtonLink to="/admin/events" variant="secondary">

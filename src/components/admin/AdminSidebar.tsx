@@ -1,4 +1,4 @@
-import { Image, LayoutDashboard, Tags } from 'lucide-react';
+import { LayoutDashboard, Tags } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 
@@ -8,7 +8,6 @@ const items = [
   { label: 'Panel principal', to: '/admin', icon: LayoutDashboard },
   { label: 'Eventos', to: '/admin/events', icon: Tags },
   { label: 'Tipos de evento', to: '/admin/event-types', icon: Tags },
-  { label: 'Medios / Imagenes', to: '/admin/media', icon: Image },
 ];
 
 export function AdminSidebar() {
