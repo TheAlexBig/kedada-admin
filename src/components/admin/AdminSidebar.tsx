@@ -1,4 +1,4 @@
-import { LayoutDashboard, Tags } from 'lucide-react';
+import { BarChart3, LayoutDashboard, Tags } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import clsx from 'clsx';
 
@@ -6,6 +6,7 @@ import { useI18n } from '../../i18n/I18nContext';
 
 const items = [
   { label: 'Panel principal', to: '/admin', icon: LayoutDashboard },
+  { label: 'Metricas', to: '/admin/metrics', icon: BarChart3 },
   { label: 'Eventos', to: '/admin/events', icon: Tags },
   { label: 'Tipos de evento', to: '/admin/event-types', icon: Tags },
 ];

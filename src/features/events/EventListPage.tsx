@@ -173,7 +173,7 @@ export function EventListPage() {
                       <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
                         event.visibleOnWebsite ? 'bg-teal-50 text-teal-800' : 'bg-stone-100 text-stone-700'
                       }`}>
-                        {event.visibleOnWebsite ? t('Publicado') : t('Oculto del sitio web')}
+                        {event.visibleOnWebsite ? t('Publicado') : t('No publicado')}
                       </span>
                     </td>
                     <td className="px-4 py-3">

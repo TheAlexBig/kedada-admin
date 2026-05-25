@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
 import { getEventById, updateEvent } from '../../api/eventService';
@@ -17,6 +17,7 @@ import { useI18n } from '../../i18n/I18nContext';
 export function EventEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { language, t } = useI18n();
   const { session } = useAuth();
   const [event, setEvent] = useState<EventResponse | null>(null);
@@ -24,6 +25,11 @@ export function EventEditPage() {
   const [urls, setUrls] = useState<UrlResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigationState = readEditNavigationState(location.state);
+  const fromMetrics = navigationState.source === 'metrics';
+  const detailState = fromMetrics
+    ? { source: 'metrics', metricsState: navigationState.metricsState }
+    : undefined;
 
   useEffect(() => {
     async function loadEvent() {
@@ -59,7 +65,7 @@ export function EventEditPage() {
 
     const updatedEvent = await updateEvent(id, payload);
     if (event?.ownerId !== session?.userId) {
-      navigate(`/admin/events/${updatedEvent.id}`, { state: { message: t('Evento actualizado correctamente') } });
+      navigate(`/admin/events/${updatedEvent.id}`, { state: { ...detailState, message: t('Evento actualizado correctamente') } });
       return;
     }
 
@@ -89,7 +95,7 @@ export function EventEditPage() {
     await Promise.all(
       urls.filter((url) => !retainedUrlIds.has(url.id)).map((url) => deleteUrl(url.id)),
     );
-    navigate(`/admin/events/${updatedEvent.id}`, { state: { message: t('Evento actualizado correctamente') } });
+    navigate(`/admin/events/${updatedEvent.id}`, { state: { ...detailState, message: t('Evento actualizado correctamente') } });
   }
 
   if (loading) {
@@ -108,14 +114,14 @@ export function EventEditPage() {
 
   return (
     <div className="space-y-5">
+      <ButtonLink to={fromMetrics ? `/admin/events/${event.id}` : '/admin/events'} state={detailState} variant="ghost">
+        <ArrowLeft className="h-4 w-4" /> {fromMetrics ? t('Volver al detalle') : t('Volver a eventos')}
+      </ButtonLink>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-2xl font-black text-stone-950">{t('Editar evento')}</h2>
           <p className="mt-1 text-sm text-stone-600">{t('Actualiza la informacion del evento.')}</p>
         </div>
-        <ButtonLink to="/admin/events" variant="secondary">
-          <ArrowLeft className="h-4 w-4" /> {t('Volver a eventos')}
-        </ButtonLink>
       </div>
       <EventForm
         initialEvent={event}
@@ -124,8 +130,26 @@ export function EventEditPage() {
         manageRelated={isOwner}
         submitLabel={t('Guardar')}
         successMessage={t('Evento actualizado correctamente')}
+        cancelTo={fromMetrics ? `/admin/events/${event.id}` : '/admin/events'}
+        cancelState={detailState}
         onSubmit={handleUpdate}
       />
     </div>
   );
+}
+
+type EditNavigationState = {
+  source?: 'metrics';
+  metricsState?: unknown;
+};
+
+function readEditNavigationState(state: unknown): EditNavigationState {
+  if (!state || typeof state !== 'object') {
+    return {};
+  }
+  const value = state as Record<string, unknown>;
+  return {
+    source: value.source === 'metrics' ? 'metrics' : undefined,
+    metricsState: value.metricsState,
+  };
 }

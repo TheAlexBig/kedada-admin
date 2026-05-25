@@ -39,6 +39,8 @@ type EventFormProps = {
   submitLabel: string;
   successMessage: string;
   manageRelated?: boolean;
+  cancelTo?: string;
+  cancelState?: unknown;
   onSubmit: (payload: EventPayload, schedules: EventScheduleValue[], urls: EventUrlValue[]) => Promise<void>;
 };
 
@@ -134,7 +136,7 @@ function fromUrls(urls?: UrlResponse[]): UrlRow[] {
   }));
 }
 
-export function EventForm({ initialEvent, initialSchedules, initialUrls, submitLabel, successMessage, manageRelated = true, onSubmit }: EventFormProps) {
+export function EventForm({ initialEvent, initialSchedules, initialUrls, submitLabel, successMessage, manageRelated = true, cancelTo = '/admin/events', cancelState, onSubmit }: EventFormProps) {
   const { language, t } = useI18n();
   const [form, setForm] = useState<FormState>(() => fromEvent(initialEvent));
   const [schedules, setSchedules] = useState<ScheduleRow[]>(() => fromSchedules(initialSchedules));
@@ -493,7 +495,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
             <span>
               <span className="block text-sm font-semibold text-stone-900">{t('Visible en el sitio web')}</span>
               <span className="mt-1 block text-sm text-stone-600">
-                {t('Desactiva esta opcion para ocultar el evento del sitio publico sin eliminarlo.')}
+                {t('Desactiva esta opcion para retirar el evento del sitio publico sin eliminarlo.')}
               </span>
             </span>
           </label>
@@ -646,7 +648,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
         </section>}
 
         <div className="flex flex-wrap justify-end gap-3 border-t border-stone-200 pt-5">
-          <ButtonLink to="/admin/events" variant="secondary">
+          <ButtonLink to={cancelTo} state={cancelState} variant="secondary">
             {t('Cancelar')}
           </ButtonLink>
           <Button type="submit" disabled={saving}>
@@ -662,7 +664,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
         </div>
         {!form.visibleOnWebsite && (
           <p className="rounded-md bg-stone-100 p-3 text-sm font-medium text-stone-700">
-            {t('Este evento esta oculto del sitio web. La vista previa solo es para administracion.')}
+            {t('Este evento no esta publicado en el sitio web. La vista previa solo es para administracion.')}
           </p>
         )}
         <EventPreviewCard event={previewEvent} categories={selectedCategories} thumbnailUrl={thumbnailUrl} primaryUrl={urls.find((url) => url.url.trim())} />

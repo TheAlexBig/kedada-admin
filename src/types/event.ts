@@ -95,3 +95,14 @@ export interface EnrichedEvent extends EventResponse {
   categories?: CategoryResponse[];
   urls?: UrlResponse[];
 }
+
+export interface EventMetricSummaryResponse {
+  eventId: UUID;
+  views: number;
+  shares: number;
+}
+
+export interface EventMetricDailyResponse extends EventMetricSummaryResponse {
+  day: string;
+  ownerId: UUID | null;
+}

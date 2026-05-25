@@ -9,6 +9,7 @@ import { MediaPage } from '../features/catalogs/MediaPage';
 import { LoginPage } from '../features/auth/LoginPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
+import { MetricsPage } from '../features/metrics/MetricsPage';
 import { EventCreatePage } from '../features/events/EventCreatePage';
 import { EventDetailPage } from '../features/events/EventDetailPage';
 import { EventEditPage } from '../features/events/EventEditPage';
@@ -46,6 +47,7 @@ export function AppRouter() {
         }
       >
         <Route index element={<DashboardPage />} />
+        <Route path="metrics" element={<MetricsPage />} />
         <Route path="events" element={<EventListPage />} />
         <Route path="events/new" element={<EventCreatePage />} />
         <Route path="events/:id" element={<EventDetailPage />} />

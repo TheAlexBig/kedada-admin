@@ -5,7 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getEventById, getEvents } from '../../api/eventService';
 import { getApiErrorMessage } from '../../api/httpClient';
 import { createSchedule, deleteSchedule, getSchedules, getSchedulesForEvent, updateSchedule } from '../../api/scheduleService';
-import { Button } from '../../components/common/Button';
+import { Button, ButtonLink } from '../../components/common/Button';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { EmptyState } from '../../components/common/EmptyState';
 import { Input } from '../../components/common/Input';
@@ -217,9 +217,9 @@ export function SchedulesPage() {
     <div className="space-y-5">
       <div>
         {isEventScoped && (
-          <Link className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-rose-700" to={`/admin/events/${eventId}`}>
+          <ButtonLink className="mb-3" variant="ghost" to={`/admin/events/${eventId}`}>
             <ArrowLeft className="h-4 w-4" /> {t('Volver al evento')}
-          </Link>
+          </ButtonLink>
         )}
         <h2 className="text-2xl font-black text-stone-950">
           {parentEvent ? t('Horarios: {title}', { title: parentEvent.title }) : t('Horarios')}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { deleteEvent, getEventById } from '../../api/eventService';
@@ -41,6 +41,11 @@ export function EventDetailPage() {
   );
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const navigationState = readDetailNavigationState(location.state);
+  const fromMetrics = navigationState.source === 'metrics';
+  const originPath = fromMetrics ? '/admin/metrics' : '/admin/events';
+  const originLabel = fromMetrics ? t('Volver a metricas') : t('Volver a eventos');
+  const editState = fromMetrics ? { source: 'metrics', metricsState: navigationState.metricsState } : undefined;
 
   useEffect(() => {
     async function loadEvent() {
@@ -92,7 +97,7 @@ export function EventDetailPage() {
       setDeleting(true);
       await deleteEvent(event.id);
       setSuccess(t('Evento eliminado correctamente.'));
-      navigate('/admin/events');
+      navigate(originPath, { state: fromMetrics ? navigationState.metricsState : undefined });
     } catch (deleteError) {
       setError(getApiErrorMessage(deleteError, language));
     } finally {
@@ -117,13 +122,16 @@ export function EventDetailPage() {
 
   return (
     <div className="space-y-5">
+      <ButtonLink to={originPath} state={fromMetrics ? navigationState.metricsState : undefined} variant="ghost">
+        <ArrowLeft className="h-4 w-4" /> {originLabel}
+      </ButtonLink>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-2xl font-black text-stone-950">{event.title}</h2>
           <p className="mt-1 text-sm text-stone-600">{t('Detalle del evento y datos relacionados.')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ButtonLink to={`/admin/events/${event.id}/edit`}>
+          <ButtonLink to={`/admin/events/${event.id}/edit`} state={editState}>
             <Pencil className="h-4 w-4" /> {t('Editar')}
           </ButtonLink>
           <Button type="button" variant="danger" onClick={() => setConfirmOpen(true)}>
@@ -144,7 +152,7 @@ export function EventDetailPage() {
             <DetailItem label={t('Creado')} value={formatDate(event.createdAt, language)} />
             <DetailItem label={t('Actualizado')} value={formatDate(event.updatedAt, language)} />
             <DetailItem label={t('Imagen')} value={event.thumbnail ?? t('Sin imagen')} />
-            <DetailItem label={t('Estado')} value={event.visibleOnWebsite ? t('Publicado') : t('Oculto del sitio web')} />
+            <DetailItem label={t('Estado')} value={event.visibleOnWebsite ? t('Publicado') : t('No publicado')} />
             <div className="sm:col-span-2">
               <dt className="text-xs font-bold uppercase tracking-wide text-stone-500">{t('Descripcion')}</dt>
               <dd className="mt-1 whitespace-pre-wrap text-sm leading-6 text-stone-800">
@@ -168,7 +176,7 @@ export function EventDetailPage() {
           <p className="text-sm font-bold text-stone-950">{t('Vista previa')}</p>
           {!event.visibleOnWebsite && (
             <p className="rounded-md bg-stone-100 p-3 text-sm font-medium text-stone-700">
-              {t('Este evento esta oculto del sitio web. La vista previa solo es para administracion.')}
+              {t('Este evento no esta publicado en el sitio web. La vista previa solo es para administracion.')}
             </p>
           )}
           <EventPreviewCard event={previewPayload} categories={categories} thumbnailUrl={thumbnailUrl} primaryUrl={urls[0]} />
@@ -222,6 +230,24 @@ export function EventDetailPage() {
       />
     </div>
   );
+}
+
+type DetailNavigationState = {
+  source?: 'metrics';
+  metricsState?: unknown;
+  message?: string;
+};
+
+function readDetailNavigationState(state: unknown): DetailNavigationState {
+  if (!state || typeof state !== 'object') {
+    return {};
+  }
+  const value = state as Record<string, unknown>;
+  return {
+    source: value.source === 'metrics' ? 'metrics' : undefined,
+    metricsState: value.metricsState,
+    message: typeof value.message === 'string' ? value.message : undefined,
+  };
 }
 
 function DetailItem({ label, value }: { label: string; value: string }) {

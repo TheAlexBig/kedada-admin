@@ -28,14 +28,14 @@ export function EventCreatePage() {
 
   return (
     <div className="space-y-5">
+      <ButtonLink to="/admin/events" variant="ghost">
+        <ArrowLeft className="h-4 w-4" /> {t('Volver a eventos')}
+      </ButtonLink>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-2xl font-black text-stone-950">{t('Crear evento')}</h2>
           <p className="mt-1 text-sm text-stone-600">{t('Completa la informacion publica del evento.')}</p>
         </div>
-        <ButtonLink to="/admin/events" variant="secondary">
-          <ArrowLeft className="h-4 w-4" /> {t('Volver a eventos')}
-        </ButtonLink>
       </div>
       <EventForm submitLabel={t('Guardar')} successMessage={t('Evento creado correctamente')} onSubmit={handleCreate} />
     </div>
