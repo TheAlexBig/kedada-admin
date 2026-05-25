@@ -79,6 +79,16 @@ export interface UrlPayload {
   kind: string;
 }
 
+export interface MediaAssetResponse {
+  id: UUID;
+  originalFilename: string;
+  contentType: string;
+  sizeBytes: number;
+  readUrl: string;
+  readUrlExpiresAt: string;
+  createdAt: string;
+}
+
 export interface EnrichedEvent extends EventResponse {
   categories?: CategoryResponse[];
   urls?: UrlResponse[];

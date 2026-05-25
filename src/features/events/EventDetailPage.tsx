@@ -7,6 +7,7 @@ import { getEventTypeById } from '../../api/eventTypeService';
 import { getApiErrorMessage } from '../../api/httpClient';
 import { getSchedulesForEvent } from '../../api/scheduleService';
 import { getUrlsForEvent } from '../../api/urlService';
+import { getImage } from '../../api/mediaService';
 import { Button, ButtonLink } from '../../components/common/Button';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { LoadingState } from '../../components/common/LoadingState';
@@ -25,6 +26,7 @@ export function EventDetailPage() {
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [urls, setUrls] = useState<UrlResponse[]>([]);
   const [schedules, setSchedules] = useState<ScheduleResponse[]>([]);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(
@@ -50,15 +52,17 @@ export function EventDetailPage() {
         setEvent(loadedEvent);
         setError(null);
 
-        const [loadedCategories, loadedUrls, loadedSchedules] = await Promise.all([
+        const [loadedCategories, loadedUrls, loadedSchedules, loadedImage] = await Promise.all([
           Promise.all(loadedEvent.categoryIds.map((categoryId) => getEventTypeById(categoryId).catch(() => undefined))),
           getUrlsForEvent(loadedEvent.id).catch(() => undefined),
           getSchedulesForEvent(loadedEvent.id).catch(() => undefined),
+          loadedEvent.thumbnail ? getImage(loadedEvent.thumbnail).catch(() => undefined) : undefined,
         ]);
 
         setCategories(loadedCategories.filter((category): category is CategoryResponse => category !== undefined));
         setUrls(loadedUrls?.content ?? []);
         setSchedules(loadedSchedules?.content ?? []);
+        setThumbnailUrl(loadedImage?.readUrl ?? null);
       } catch (loadError) {
         setError(getApiErrorMessage(loadError, language));
       } finally {
@@ -158,7 +162,7 @@ export function EventDetailPage() {
 
         <aside className="space-y-3">
           <p className="text-sm font-bold text-stone-950">{t('Vista previa')}</p>
-          <EventPreviewCard event={previewPayload} categories={categories} primaryUrl={urls[0]} />
+          <EventPreviewCard event={previewPayload} categories={categories} thumbnailUrl={thumbnailUrl} primaryUrl={urls[0]} />
         </aside>
       </div>
 

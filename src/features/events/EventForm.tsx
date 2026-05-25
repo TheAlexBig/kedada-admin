@@ -8,6 +8,7 @@ import { Input } from '../../components/common/Input';
 import { Textarea } from '../../components/common/Textarea';
 import type { CategoryResponse, EventPayload, EventResponse, ScheduleResponse, UrlResponse } from '../../types/event';
 import { getApiErrorMessage } from '../../api/httpClient';
+import { getImage, uploadImage } from '../../api/mediaService';
 import { EventPreviewCard } from './EventPreviewCard';
 import { useI18n } from '../../i18n/I18nContext';
 
@@ -140,6 +141,9 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [scheduleErrors, setScheduleErrors] = useState<ScheduleErrors[]>([]);
   const [urlErrors, setUrlErrors] = useState<UrlErrors[]>([]);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -154,6 +158,30 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
   useEffect(() => {
     setUrls(fromUrls(initialUrls));
   }, [initialUrls]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!initialEvent?.thumbnail) {
+      setThumbnailUrl(null);
+      return;
+    }
+
+    getImage(initialEvent.thumbnail)
+      .then((image) => {
+        if (!cancelled) {
+          setThumbnailUrl(image.readUrl);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setImageError(t('No se pudo cargar la imagen seleccionada.'));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialEvent?.thumbnail, t]);
 
   useEffect(() => {
     async function loadCatalogs() {
@@ -247,6 +275,30 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
     });
     setUrlErrors((current) => current.filter((_, currentIndex) => currentIndex !== index));
     setSaved(false);
+  }
+
+  async function uploadThumbnail(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      setImageError(null);
+      const image = await uploadImage(file);
+      updateField('thumbnail', image.id);
+      setThumbnailUrl(image.readUrl);
+    } catch (error) {
+      setImageError(getApiErrorMessage(error, language));
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  function removeThumbnail() {
+    updateField('thumbnail', '');
+    setThumbnailUrl(null);
+    setImageError(null);
   }
 
   function validate() {
@@ -448,13 +500,31 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
           {fieldErrors.categoryIds && <p className="text-sm text-red-600">{fieldErrors.categoryIds}</p>}
         </fieldset>
 
-        <Input
-          label={t('Imagen')}
-          name="thumbnail"
-          value={form.thumbnail}
-          helperText={t('El backend aun no tiene carga de imagenes; usa un UUID existente si aplica.')}
-          onChange={(event) => updateField('thumbnail', event.target.value)}
-        />
+        <section className="space-y-3 rounded-md border border-stone-200 bg-stone-50 p-4">
+          <p className="text-sm font-semibold text-stone-900">{t('Imagen del evento')}</p>
+          <p className="text-sm text-stone-600">{t('Selecciona una imagen JPEG, PNG, WEBP o GIF de hasta 5 MB.')}</p>
+          {thumbnailUrl && (
+            <img className="h-40 w-full rounded-md object-cover sm:w-64" src={thumbnailUrl} alt={form.title || t('Imagen del evento')} />
+          )}
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="inline-flex h-10 cursor-pointer items-center rounded-md bg-rose-600 px-3.5 text-sm font-semibold text-white hover:bg-rose-700">
+              {uploadingImage ? t('Subiendo imagen...') : t('Subir imagen')}
+              <input
+                className="sr-only"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                disabled={uploadingImage}
+                onChange={(event) => void uploadThumbnail(event.target.files?.[0])}
+              />
+            </label>
+            {form.thumbnail && (
+              <Button type="button" variant="secondary" onClick={removeThumbnail}>
+                {t('Quitar imagen')}
+              </Button>
+            )}
+          </div>
+          {imageError && <p className="text-sm text-red-700">{imageError}</p>}
+        </section>
 
         <section className="space-y-4 rounded-md border border-stone-200 bg-stone-50 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -563,7 +633,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
           <p className="text-sm font-bold text-stone-950">{t('Vista previa')}</p>
           <p className="mt-1 text-sm text-stone-600">{t('Aproximacion de la tarjeta publica del evento.')}</p>
         </div>
-        <EventPreviewCard event={previewEvent} categories={selectedCategories} primaryUrl={urls.find((url) => url.url.trim())} />
+        <EventPreviewCard event={previewEvent} categories={selectedCategories} thumbnailUrl={thumbnailUrl} primaryUrl={urls.find((url) => url.url.trim())} />
       </aside>
     </div>
   );

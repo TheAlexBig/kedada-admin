@@ -7,18 +7,17 @@ import { useI18n } from '../../i18n/I18nContext';
 type EventPreviewCardProps = {
   event: Partial<EventPayload> & { createdAt?: string };
   categories?: CategoryResponse[];
+  thumbnailUrl?: string | null;
   primaryUrl?: { url: string };
 };
 
-export function EventPreviewCard({ event, categories, primaryUrl }: EventPreviewCardProps) {
+export function EventPreviewCard({ event, categories, thumbnailUrl, primaryUrl }: EventPreviewCardProps) {
   const { language, t } = useI18n();
   return (
     <article className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
       <div className="aspect-[16/9] bg-gradient-to-br from-rose-100 via-amber-100 to-teal-100">
-        {event.thumbnail ? (
-          <div className="flex h-full items-center justify-center p-6 text-center text-sm font-medium text-stone-600">
-            {t('Imagen registrada: {id}', { id: event.thumbnail.slice(0, 8) })}
-          </div>
+        {thumbnailUrl ? (
+          <img className="h-full w-full object-cover" src={thumbnailUrl} alt={event.title || t('Imagen del evento')} />
         ) : (
           <div className="flex h-full items-center justify-center text-sm font-semibold text-stone-600">
             Kedada

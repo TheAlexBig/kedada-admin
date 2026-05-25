@@ -44,5 +44,6 @@ The source-of-truth API is `/home/alex/Documents/kedada-api`.
 Write requests use `Authorization: Bearer <token>`, and the backend derives
 `ownerId` from the authenticated session.
 
-There are no media/image endpoints yet. The `thumbnail` field remains a manual
-UUID until the backend exposes image upload or an image catalog.
+Event create/edit uploads JPEG, PNG, WEBP, or GIF images (up to 5 MB) through
+`POST /api/v1/media`. The event stores the returned media UUID in `thumbnail`;
+previews and published views use the API-provided signed read URL.
