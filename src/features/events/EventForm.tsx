@@ -18,6 +18,7 @@ type FormState = {
   priority: string;
   thumbnail: string;
   price: string;
+  visibleOnWebsite: boolean;
   categoryIds: string[];
 };
 
@@ -27,6 +28,7 @@ const emptyForm: FormState = {
   priority: '1',
   thumbnail: '',
   price: '',
+  visibleOnWebsite: true,
   categoryIds: [],
 };
 
@@ -87,6 +89,7 @@ function fromEvent(event?: EventResponse): FormState {
     priority: String(event.priority ?? 1),
     thumbnail: event.thumbnail ?? '',
     price: event.price === null || event.price === undefined ? '' : String(event.price),
+    visibleOnWebsite: event.visibleOnWebsite,
     categoryIds: event.categoryIds ?? [],
   };
 }
@@ -226,6 +229,11 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
         : [...current.categoryIds, categoryId],
     }));
     setFieldErrors((current) => ({ ...current, categoryIds: undefined }));
+    setSaved(false);
+  }
+
+  function toggleVisibility() {
+    setForm((current) => ({ ...current, visibleOnWebsite: !current.visibleOnWebsite }));
     setSaved(false);
   }
 
@@ -393,6 +401,7 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
       priority: Number(form.priority || 1),
       thumbnail: form.thumbnail || null,
       price: form.price === '' ? null : Number(form.price),
+      visibleOnWebsite: form.visibleOnWebsite,
       categoryIds: form.categoryIds,
     };
     const schedulePayloads = schedules
@@ -471,6 +480,23 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
             onChange={(event) => updateField('price', event.target.value)}
           />
         </div>
+
+        <section className="rounded-md border border-stone-200 bg-stone-50 p-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              className="mt-1 h-4 w-4 accent-teal-700"
+              type="checkbox"
+              checked={form.visibleOnWebsite}
+              onChange={toggleVisibility}
+            />
+            <span>
+              <span className="block text-sm font-semibold text-stone-900">{t('Visible en el sitio web')}</span>
+              <span className="mt-1 block text-sm text-stone-600">
+                {t('Desactiva esta opcion para ocultar el evento del sitio publico sin eliminarlo.')}
+              </span>
+            </span>
+          </label>
+        </section>
 
         <fieldset className="space-y-2">
           <legend className="text-sm font-semibold text-stone-800">
@@ -633,6 +659,11 @@ export function EventForm({ initialEvent, initialSchedules, initialUrls, submitL
           <p className="text-sm font-bold text-stone-950">{t('Vista previa')}</p>
           <p className="mt-1 text-sm text-stone-600">{t('Aproximacion de la tarjeta publica del evento.')}</p>
         </div>
+        {!form.visibleOnWebsite && (
+          <p className="rounded-md bg-stone-100 p-3 text-sm font-medium text-stone-700">
+            {t('Este evento esta oculto del sitio web. La vista previa solo es para administracion.')}
+          </p>
+        )}
         <EventPreviewCard event={previewEvent} categories={selectedCategories} thumbnailUrl={thumbnailUrl} primaryUrl={urls.find((url) => url.url.trim())} />
       </aside>
     </div>

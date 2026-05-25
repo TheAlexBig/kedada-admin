@@ -7,6 +7,7 @@ export interface EventResponse {
   priority: number | null;
   thumbnail: UUID | null;
   price: number | null;
+  visibleOnWebsite: boolean;
   categoryIds: UUID[];
   ownerId: UUID | null;
   createdAt: string;
@@ -19,6 +20,7 @@ export interface EventPayload {
   priority?: number | null;
   thumbnail?: UUID | null;
   price?: number | null;
+  visibleOnWebsite?: boolean;
   categoryIds: UUID[];
 }
 

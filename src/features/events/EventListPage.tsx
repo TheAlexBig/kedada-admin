@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { FileText, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { deleteEvent, getEvents } from '../../api/eventService';
@@ -13,7 +13,7 @@ import { LoadingState } from '../../components/common/LoadingState';
 import { Select } from '../../components/common/Select';
 import { ErrorState, SuccessMessage } from '../../components/common/StatusMessage';
 import type { CategoryResponse, EventResponse } from '../../types/event';
-import { formatCurrency, formatDate, getStatusLabel } from '../../utils/formatters';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 import { useI18n } from '../../i18n/I18nContext';
 
 export function EventListPage() {
@@ -170,14 +170,16 @@ export function EventListPage() {
                     <td className="px-4 py-3 text-stone-700">{formatCurrency(event.price, language)}</td>
                     <td className="px-4 py-3 text-stone-700">{formatDate(event.createdAt, language)}</td>
                     <td className="px-4 py-3">
-                      <span className="rounded-md bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
-                        {getStatusLabel(language)}
+                      <span className={`rounded-md px-2.5 py-1 text-xs font-semibold ${
+                        event.visibleOnWebsite ? 'bg-teal-50 text-teal-800' : 'bg-stone-100 text-stone-700'
+                      }`}>
+                        {event.visibleOnWebsite ? t('Publicado') : t('Oculto del sitio web')}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
-                        <Link className="rounded-md p-2 text-stone-600 hover:bg-stone-100" to={`/admin/events/${event.id}`} title={t('Ver')}>
-                          <Eye className="h-4 w-4" />
+                        <Link className="rounded-md p-2 text-stone-600 hover:bg-stone-100" to={`/admin/events/${event.id}`} title={t('Abrir detalle del evento')} aria-label={t('Abrir detalle del evento')}>
+                          <FileText className="h-4 w-4" />
                         </Link>
                         <Link className="rounded-md p-2 text-stone-600 hover:bg-stone-100" to={`/admin/events/${event.id}/edit`} title={t('Editar')}>
                           <Pencil className="h-4 w-4" />

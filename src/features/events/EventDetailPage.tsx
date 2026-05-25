@@ -16,12 +16,14 @@ import type { CategoryResponse, EventResponse, ScheduleResponse, UrlResponse } f
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { EventPreviewCard } from './EventPreviewCard';
 import { useI18n } from '../../i18n/I18nContext';
+import { useAuth } from '../../auth/useAuth';
 
 export function EventDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { language, t } = useI18n();
+  const { session } = useAuth();
   const [event, setEvent] = useState<EventResponse | null>(null);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [urls, setUrls] = useState<UrlResponse[]>([]);
@@ -111,6 +113,8 @@ export function EventDetailPage() {
     return <ErrorState message={t('No encontramos el evento solicitado.')} />;
   }
 
+  const isOwner = event.ownerId === session?.userId;
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -120,11 +124,13 @@ export function EventDetailPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <ButtonLink to={`/admin/events/${event.id}/edit`}>
-            <Pencil className="h-4 w-4" /> {t('Editar')}
+            <Pencil className="h-4 w-4" /> {isOwner ? t('Editar') : t('Editar visibilidad')}
           </ButtonLink>
-          <Button type="button" variant="danger" onClick={() => setConfirmOpen(true)}>
-            <Trash2 className="h-4 w-4" /> {t('Eliminar')}
-          </Button>
+          {isOwner && (
+            <Button type="button" variant="danger" onClick={() => setConfirmOpen(true)}>
+              <Trash2 className="h-4 w-4" /> {t('Eliminar')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -140,7 +146,7 @@ export function EventDetailPage() {
             <DetailItem label={t('Creado')} value={formatDate(event.createdAt, language)} />
             <DetailItem label={t('Actualizado')} value={formatDate(event.updatedAt, language)} />
             <DetailItem label={t('Imagen')} value={event.thumbnail ?? t('Sin imagen')} />
-            <DetailItem label={t('Estado')} value={t('Publicado')} />
+            <DetailItem label={t('Estado')} value={event.visibleOnWebsite ? t('Publicado') : t('Oculto del sitio web')} />
             <div className="sm:col-span-2">
               <dt className="text-xs font-bold uppercase tracking-wide text-stone-500">{t('Descripcion')}</dt>
               <dd className="mt-1 whitespace-pre-wrap text-sm leading-6 text-stone-800">
@@ -162,6 +168,11 @@ export function EventDetailPage() {
 
         <aside className="space-y-3">
           <p className="text-sm font-bold text-stone-950">{t('Vista previa')}</p>
+          {!event.visibleOnWebsite && (
+            <p className="rounded-md bg-stone-100 p-3 text-sm font-medium text-stone-700">
+              {t('Este evento esta oculto del sitio web. La vista previa solo es para administracion.')}
+            </p>
+          )}
           <EventPreviewCard event={previewPayload} categories={categories} thumbnailUrl={thumbnailUrl} primaryUrl={urls[0]} />
         </aside>
       </div>

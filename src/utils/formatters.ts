@@ -37,7 +37,3 @@ export function truncate(text: string | null | undefined, maxLength = 150, langu
 
   return `${text.slice(0, maxLength).trim()}...`;
 }
-
-export function getStatusLabel(language: Language = 'es') {
-  return language === 'es' ? 'Publicado' : 'Published';
-}

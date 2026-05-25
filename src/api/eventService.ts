@@ -25,6 +25,11 @@ export async function updateEvent(id: UUID, payload: EventUpdatePayload) {
   return response.data;
 }
 
+export async function updateEventVisibility(id: UUID, visibleOnWebsite: boolean) {
+  const response = await apiClient.patch<EventResponse>(`/api/v1/events/${id}/visibility`, { visibleOnWebsite });
+  return response.data;
+}
+
 export async function deleteEvent(id: UUID) {
   await apiClient.delete(`/api/v1/events/${id}`);
 }
