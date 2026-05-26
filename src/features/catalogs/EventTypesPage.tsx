@@ -143,7 +143,7 @@ export function EventTypesPage() {
       <div>
         <h2 className="text-2xl font-black text-stone-950">{t('Tipos de evento')}</h2>
         <p className="mt-1 text-sm text-stone-600">
-          {t('El backend los expone como categorias en')} <code>/api/v1/categories</code>.
+          {t('Organiza los eventos por categorias para facilitar su busqueda y publicacion.')}
         </p>
       </div>
 
@@ -192,7 +192,7 @@ export function EventTypesPage() {
         )}
 
         <p className="mt-4 text-xs text-stone-500">
-          {t('La propiedad del tipo se asigna automaticamente desde tu sesion.')}
+          {t('Los usuarios autenticados del panel pueden administrar este catalogo.')}
         </p>
       </form>
 
